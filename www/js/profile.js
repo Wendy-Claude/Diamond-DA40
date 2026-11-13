@@ -16,7 +16,7 @@ function profileModel(r){
   };
   let a=leg(F.tripLeg,F.tripAp,elev(ap.dep),"TRIP","altTrip","distTrip");
   if(F.tripAp&&F.tripAp.min>0) add({label:"Anflug",a0:a,a1:elev(ap.dest),nm:F.tripAp.mode==="self"?F.tripAp.dist:null,min:F.tripAp.min,usg:F.tripAp.usg,leg:"TRIP"});
-  const marks=[{i:0,name:ap.dep.icao||"DEP"},{i:ph.length,name:ap.dest.icao||"DEST"}];
+  const marks=[{i:0,name:ap.dep.icao||"DEP"},{i:ph.length,name:ap.dest.icao||"DEST",pull:F.pullUp}];
   if(r.withAlt&&F.altLeg&&F.altLeg.ok){
     a=leg(F.altLeg,F.altAp,elev(ap.dest),"ALTN","altAlt","distAlt");
     if(r.ifr&&F.holdMin>0) add({label:"Holding",a0:a,a1:a,nm:null,min:F.holdMin,usg:F.altHold,leg:"ALTN",hold:true});
@@ -49,7 +49,7 @@ function profileSvg(r){
   M.ph.forEach((p,i)=>{ if(p.hold){ const cx=(X[i].x0+X[i].x1)/2, cy=Y(p.a0); s+=`<ellipse cx="${cx}" cy="${cy-9}" rx="${Math.min(26,(X[i].x1-X[i].x0)/2-4)}" ry="7" class="phold"/>`; } });
   // Platzmarken
   M.marks.forEach(m=>{ const x=m.i<X.length?X[m.i].x0:X[X.length-1].x1; const a=m.i<M.ph.length?M.ph[m.i].a0:M.ph[M.ph.length-1].a1;
-    s+=`<line x1="${x}" x2="${x}" y1="${top}" y2="${top+H}" class="pm"/><circle cx="${x}" cy="${Y(a)}" r="4" class="pdot"/><text x="${x}" y="${top+H+12}" text-anchor="middle" class="pmt">${esc(m.name)}</text>`; });
+    s+=`<line x1="${x}" x2="${x}" y1="${top}" y2="${top+H}" class="pm"/><circle cx="${x}" cy="${Y(a)}" r="4" class="pdot"/><text x="${x}" y="${top+H+12}" text-anchor="middle" class="pmt">${esc(m.name)}</text>`+(m.pull!=null?`<rect x="${x-52}" y="${top+20}" width="104" height="30" rx="4" class="ppu"/><text x="${x}" y="${top+32}" text-anchor="middle" class="ppt">PULL UP FUEL</text><text x="${x}" y="${top+45}" text-anchor="middle" class="ppv">${f1(m.pull)} USG</text>`:""); });
   // Zieh-Griffe Reiseflughoehe, antippbare Strecke
   M.ph.forEach((p,i)=>{ if(!p.drag) return; const cx=(X[i].x0+X[i].x1)/2, cy=Y(p.a0);
     s+=`<g class="phandle" data-field="${p.drag}" data-min="${Math.max(1000,Math.ceil((p.leg==="TRIP"?(r.ap.dep.elev||0):(r.ap.dest.elev||0))/500)*500+500)}"><circle cx="${cx}" cy="${cy}" r="11"/><text x="${cx}" y="${cy+4}" text-anchor="middle">↕</text></g><text x="${cx}" y="${cy-15}" text-anchor="middle" class="palt" data-for="${p.drag}">${fmtAlt(p.a0)}</text>`;
@@ -85,7 +85,8 @@ function profilePdf(pg,r,h){
   for(let a=0;a<=M.top;a+=M.top>10000?4000:2000){ d.line(pg.X(L),Y(a),pg.X(L+PW),Y(a)); d.text(String(a),pg.X(L-1),Y(a)+1,{align:"right"}); }
   pg.stroke(C.red); d.setLineWidth(0.5);
   M.ph.forEach((p,i)=>{ d.line(pg.X(X[i].x0),Y(p.a0),pg.X(X[i].x1),Y(p.a1)); if(p.hold){ d.setLineWidth(0.25); d.ellipse(pg.X((X[i].x0+X[i].x1)/2),Y(p.a0)-2.2,Math.min(6,(X[i].x1-X[i].x0)/2-1),1.6); d.setLineWidth(0.5); } });
-  M.marks.forEach(m=>{ const x=m.i<X.length?X[m.i].x0:X[X.length-1].x1; pg.stroke(C.dark); d.setLineWidth(0.15); d.line(pg.X(x),top,pg.X(x),top+H); pg.color(C.dark); pg.font(5.2,"bold"); d.text(pdfTxt(m.name),pg.X(x),top-0.6,{align:"center"}); });
+  M.marks.forEach(m=>{ const x=m.i<X.length?X[m.i].x0:X[X.length-1].x1; pg.stroke(C.dark); d.setLineWidth(0.15); d.line(pg.X(x),top,pg.X(x),top+H); pg.color(C.dark); pg.font(5.2,"bold"); d.text(pdfTxt(m.name),pg.X(x),top-0.6,{align:"center"});
+    if(m.pull!=null){ pg.fill(C.mark); d.rect(pg.X(x-11),top+1.5,22,5.6,"F"); pg.color(C.dark); pg.font(4.6,"bold"); d.text("PULL UP FUEL",pg.X(x),top+3.6,{align:"center"}); d.text(f1(m.pull)+" USG",pg.X(x),top+6.2,{align:"center"}); } });
   M.ph.forEach((p,i)=>{ if(p.drag){ pg.color(C.red); pg.font(5,"bold"); d.text(fmtAlt(p.a0),pg.X((X[i].x0+X[i].x1)/2),Y(p.a0)-1.2,{align:"center"}); } });
   pg.color([30,30,30]);
   M.ph.forEach((p,i)=>{ const cx=pg.X((X[i].x0+X[i].x1)/2); pg.stroke([200,200,190]); d.setLineWidth(0.1); d.line(pg.X(X[i].x0),by-1,pg.X(X[i].x0),by+10);

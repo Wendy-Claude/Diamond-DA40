@@ -95,3 +95,7 @@ table.fuel input{width:100%;min-width:70px}table.fuel td{vertical-align:middle}t
 .sw.inv input:checked+span{background:var(--olive)}.sw.inv input:checked+span::before{transform:none}.sw.inv input:not(:checked)+span{background:var(--red)}.sw.inv input:not(:checked)+span::before{transform:translateX(30px)}
 #clsRow.off{opacity:.35;pointer-events:none}
 #planLabel{font-weight:700;letter-spacing:.02em;color:var(--dark);text-align:center}
+
+.fuelsum tr.grp td{background:var(--light);font-size:11px;font-weight:700;color:var(--olive);text-transform:uppercase;letter-spacing:.03em}
+.fuelsum tr.pullup td{background:var(--mark);border-top:2px solid var(--red);border-bottom:2px solid var(--red)}
+.profile .ppu{fill:#ffec96;stroke:var(--red);stroke-width:1}.profile .ppt{font-size:8.5px;font-weight:700;fill:var(--dark)}.profile .ppv{font-size:11px;font-weight:700;fill:var(--red)}

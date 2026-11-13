@@ -168,6 +168,7 @@ function compute(guess){
   if(!F.tripLeg.ok) r.warn.push("Trip fuel: "+F.tripLeg.note+".");
   if(withAlt&&F.altLeg&&!F.altLeg.ok) r.warn.push("Alternate fuel: "+F.altLeg.note+".");
   F.req = F.taxi+F.trip+F.cont+F.alt+F.add+F.final;
+  F.pullUp = withAlt ? F.alt+F.final : null; // Mindestmenge beim Durchstarten an DEST, um mit Final Reserve am ALTN zu landen
   F.extra = F.fob!=null?F.fob-F.req:null;
   F.afterLanding = F.fob!=null?F.fob-F.taxi-F.trip:null;
   F.endurance = F.fob!=null?(F.fob-F.taxi)/6.6*60:null;
@@ -289,12 +290,17 @@ function render(){
   if(r.withAlt){ legOut("a",F.altLeg,r.ap.dest); apOut("a","Alt",F.altAp); setT("aTotMin",f0(r.altTot+(r.ifr?F.holdMin:0)));
     setT("aHoldInfo",r.ifr?`${F.holdMin} min @ ${F.holdPwr} % (${f1(FBH.ff[F.holdPwr])} USG/h)`:"entfällt (VFR)"); setT("aHoldMin",r.ifr?f0(F.holdMin):""); setT("aHoldF",f1(F.altHold)); setT("aTotF",f1(F.alt)); }
   const fr=(l,d,v,cls="")=>`<tr class="${cls}"><td>${l}</td><td>${d}</td><td class="n">${f1(v)}</td></tr>`;
-  $("fuelOut").innerHTML=`<table class="t"><thead><tr><th>Position</th><th>Grundlage</th><th class="n">USG</th></tr></thead><tbody>
+  const head=t=>`<tr class="grp"><td colspan="3">${t}</td></tr>`;
+  $("fuelOut").innerHTML=`<table class="t fuelsum"><thead><tr><th>Position</th><th>Grundlage</th><th class="n">USG</th></tr></thead><tbody>
+   ${head("Bis zur Destination "+esc(r.ap.dest.icao||""))}
    ${fr("Taxi fuel","1 USG",F.taxi)}
    ${fr("Trip fuel","inkl. Steigflug und Anflug",F.trip)}
    ${fr("Contingency fuel","10 % vom Trip fuel",F.cont)}
-   ${r.withAlt?fr("Alternate fuel","inkl. Anflug"+(r.ifr?" und Warteverfahren":""),F.alt):fr("Additional fuel","No Alternate Required: 5 USG (= 45 min @ 75 %)",F.add)}
-   ${fr("Final reserve fuel","3 USG",F.final)}
+   ${r.withAlt?`<tr class="pullup"><td><b>PULL UP FUEL</b></td><td>Mindestmenge beim Durchstarten an ${esc(r.ap.dest.icao||"DEST")}, um mit Final Reserve am ${esc(r.ap.altn.icao||"ALTN")} zu landen (Alternate fuel + Final reserve)</td><td class="n"><b>${f1(F.pullUp)}</b></td></tr>`+head("Alternate "+esc(r.ap.altn.icao||"")):head("Ohne Alternate")}
+   ${r.withAlt?fr("Alternate fuel","inkl. Steigflug, Anflug"+(r.ifr?" und Warteverfahren":""),F.alt):fr("Additional fuel","No Alternate Required: 5 USG (= 45 min @ 75 %)",F.add)}
+   ${fr("Final reserve fuel","3 USG (Unterschreiten = MAYDAY)",F.final)}
+   </tbody></table>
+   <table class="t"><tbody>
    ${fr("<b>Minimum required</b>","",F.req,"sum")}
    ${fr("Fuel on board","max. 39 USG verfügbar",F.fob)}
    ${fr("Extra fuel","FOB – Minimum",F.extra,F.extra<0?"bad":"")}
