@@ -1,7 +1,10 @@
 name: Build APK
 on:
   push:
+    branches-ignore: [build-output]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -34,3 +37,15 @@ jobs:
         with:
           name: D40-Performance-Fuel-html
           path: out/D40_Performance_Fuel.html
+      - name: Publish build files to branch build-output
+        run: |
+          mkdir pub
+          cp android/app/build/outputs/apk/debug/app-debug.apk pub/D40-Performance-Fuel-debug.apk
+          cp out/D40_Performance_Fuel.html pub/
+          cd pub
+          git init -q -b build-output
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add .
+          git commit -q -m "Build ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" build-output
