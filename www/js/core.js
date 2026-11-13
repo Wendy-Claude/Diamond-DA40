@@ -5,40 +5,7 @@ const FBH = {
   vrVapp: [[1000,58,68],[1100,61,72],[1125,62,73],[1150,63,74],[1175,64,75],[1200,65,76],[1280,67,77],[1310,67,77]],
   // 4.4 Treibstoffverbrauch (Leistung % -> USG/h)
   ff: {30:2.9,35:3.3,40:3.7,45:4.0,50:4.4,55:4.7,60:5.1,65:5.6,70:6.1,75:6.6,80:7.1,85:7.6,90:8.1,92:8.3,100:9.4},
-  // 4.2 Startstrecke 1310 kg, Flaps T/O, dry paved level. Zeilen PA 0..10000 ft, Spalten OAT 0..50 °C
-  toPA: [0,1000,2000,3000,4000,5000,6000,7000,8000,9000,10000],
-  toT: [0,10,20,30,40,50],
-  toRoll: [
-    [365,385,410,430,460,495],[390,410,435,465,500,535],[415,440,465,500,540,575],[440,470,500,540,580,625],
-    [470,500,540,590,630,680],[505,535,585,640,685,null],[540,585,640,700,750,null],[580,640,700,765,820,null],
-    [635,700,770,845,900,null],[695,770,850,915,990,null],[765,850,910,995,null,null]],
-  to50: [
-    [550,580,610,640,680,720],[580,610,640,680,730,770],[610,640,680,730,780,830],[650,680,720,780,840,890],
-    [690,720,780,840,900,960],[730,770,840,910,970,null],[770,830,900,980,1040,null],[820,900,980,1060,1130,null],
-    [890,970,1060,1160,1230,null],[970,1060,1160,1250,1330,null],[1050,1160,1240,1340,null,null]],
-  // 4.5 Landestrecke 1310 kg, Flaps LDG
-  ldRoll: [
-    [305,315,325,335,355,375],[315,325,335,350,370,395],[325,335,350,370,390,415],[335,350,365,385,410,435],
-    [350,360,380,405,430,455],[360,375,400,425,450,null],[375,395,420,445,475,null],[400,430,460,485,515,null],
-    [455,485,520,550,585,null],[520,555,585,625,660,null],[580,620,655,695,null,null]],
-  ld50: [
-    [620,650,670,680,720,760],[640,660,680,700,740,790],[650,670,690,730,770,810],[670,690,710,750,800,840],
-    [680,700,740,780,830,870],[700,720,770,810,860,null],[710,750,790,840,890,null],[750,790,840,890,940,null],
-    [810,870,920,970,1020,null],[890,950,1000,1060,1120,null],[970,1030,1090,1140,null,null]],
-  // 4.3 Steigraten [ft/min]; Massen 1310/1280/1200; PA 0..16400; OAT -20..50
-  clM: [1310,1280,1200],
-  clPA: [0,2000,4000,6000,8000,10000,12000,14000,16000,16400],
-  clT: [-20,-10,0,10,20,30,40,50],
-  toClimb: { // Take-off Climb, flaps T/O, 72 KIAS, 92 %
-    1310:[[660,650,640,630,620,615,590,550],[640,630,620,610,605,595,555,515],[620,610,600,595,585,560,520,475],[600,590,580,570,555,520,475,null],[580,570,555,540,525,480,435,null],[555,540,525,510,480,435,null,null],[525,510,495,480,435,400,null,null],[500,485,475,460,425,360,null,null],[490,470,440,385,325,null,null,null],[475,450,420,370,305,null,null,null]],
-    1280:[[675,665,655,645,635,625,600,560],[655,645,635,625,615,605,570,525],[635,625,615,605,595,575,530,485],[615,605,595,580,570,535,485,null],[595,580,565,550,535,490,445,null],[565,550,535,520,490,445,null,null],[535,520,505,490,445,410,null,null],[510,495,485,470,430,370,null,null],[500,480,450,395,330,null,null,null],[485,460,430,375,310,null,null,null]],
-    1200:[[740,730,720,710,700,690,665,620],[720,710,700,690,680,670,630,585],[700,690,680,670,660,635,590,540],[680,670,660,645,630,595,545,null],[660,645,630,615,600,545,500,null],[630,615,600,585,550,500,null,null],[595,580,565,550,505,460,null,null],[575,560,545,530,490,420,null,null],[560,540,510,450,380,null,null,null],[545,520,490,430,360,null,null,null]]
-  },
-  crClimb: { // Cruise Climb, flaps UP, 88 KIAS, 92 %
-    1310:[[665,660,655,650,645,645,620,585],[655,650,645,640,635,630,595,555],[645,640,635,630,620,605,565,525],[635,630,620,615,605,580,540,null],[620,615,605,600,590,550,505,null],[605,600,590,580,555,510,null,null],[590,580,570,560,520,480,null,null],[575,565,555,540,500,445,null,null],[560,550,520,470,405,null,null,null],[545,535,500,450,380,null,null,null]],
-    1280:[[690,685,680,675,670,665,645,605],[680,675,670,665,660,655,615,575],[670,665,660,650,645,630,590,545],[660,650,645,635,630,600,560,null],[645,635,630,620,610,570,525,null],[630,620,615,605,580,535,null,null],[615,605,590,580,540,500,null,null],[595,585,580,560,525,465,null,null],[585,575,545,490,425,null,null,null],[570,555,525,470,400,null,null,null]],
-    1200:[[750,750,745,740,735,730,705,665],[745,740,735,730,725,720,680,635],[735,730,725,715,710,690,650,605],[725,715,710,700,695,660,620,null],[710,700,695,685,675,630,585,null],[695,685,680,670,640,590,null,null],[680,665,655,645,600,560,null,null],[660,650,640,625,585,520,null,null],[650,640,605,550,480,null,null,null],[635,620,585,525,455,null,null,null]]
-  },
+  // Start-/Lande-/Steigdaten: siehe afm-data.js (AFM Kap. 5.3.7-5.3.12)
   // 1.8 / 6.1 Massen und Schwerpunkt
   maxTXM:1314, maxTOM:1310, maxLM:1280, maxZFM:1265, minMass:940,
   arm:{front:2.30, rear:3.25, fwdBag:3.89, aftBag:4.54, fuel:2.63},
@@ -81,28 +48,34 @@ function vrVapp(mass){
   return {vr:null,vapp:null,row:null};
 }
 
+function massBracket(mass){ // [leichter, schwerer, t]; unter kleinster Masse: kleinste Tabelle (AFM 5.2)
+  const M=AFM_DATA.masses;
+  if(mass<=M[0]) return [M[0],M[0],0];
+  for(let i=0;i<M.length-1;i++){ if(mass<=M[i+1]+1e-9) return [M[i],M[i+1],(mass-M[i])/(M[i+1]-M[i])]; }
+  return null;
+}
 function climbRoc(table,mass,pa,oat){
   if(mass>FBH.maxTOM+0.01) return {roc:null,note:"Masse über 1310 kg"};
-  let note="";
-  const m = Math.max(mass,1200); if(mass<1200) note="Masse < 1200 kg: Werte für 1200 kg (konservativ)";
-  if(oat<-20) oat=-20;
-  if(pa<0) pa=0;
-  const M=FBH.clM; // descending
-  let hi,lo; if(m>=1280){hi=1310;lo=1280;} else {hi=1280;lo=1200;}
-  const t=(m-lo)/(hi-lo);
-  const a=interp2(FBH.clPA,FBH.clT,table[lo],pa,oat), b=interp2(FBH.clPA,FBH.clT,table[hi],pa,oat);
+  let note=""; if(mass<AFM_DATA.masses[0]) note="Masse < 1100 kg: Werte für 1100 kg (AFM 5.2)";
+  if(oat<-20) oat=-20; if(pa<0) pa=0;
+  const [lo,hi,t]=massBracket(mass);
+  const a=interp2(AFM_DATA.climbPA,AFM_DATA.climbT,table[lo],pa,oat), b=interp2(AFM_DATA.climbPA,AFM_DATA.climbT,table[hi],pa,oat);
   if(a==null||b==null) return {roc:null,note:"außerhalb der Tabelle"};
   return {roc:lerp(a,b,t),note};
 }
 
-function distTable(rollTab,d50Tab,pa,oat){
-  let note=""; let o=oat;
-  if(o<0){ o=0; note="OAT < 0 °C: Spalte 0 °C verwendet (konservativ)"; }
-  const roll=interp2(FBH.toPA,FBH.toT,rollTab,Math.max(pa,0),o);
-  const d50=interp2(FBH.toPA,FBH.toT,d50Tab,Math.max(pa,0),o);
+function distMass(kind,mass,pa,oat){
+  const T=AFM_DATA[kind]; let note="";
+  const br=massBracket(mass); if(!br) return {roll:null,d50:null,note:"Masse über 1310 kg"};
+  if(mass<AFM_DATA.masses[0]) note="Masse < 1100 kg: Werte für 1100 kg (AFM 5.2)";
+  let o=oat; if(o<0){ o=0; note=(note?note+"; ":"")+"OAT < 0 °C: Spalte 0 °C verwendet"; }
   if(pa>10000) return {roll:null,d50:null,note:"PA > 10.000 ft – außerhalb der Tabelle"};
-  if(roll==null||d50==null) return {roll:null,d50:null,note:"außerhalb der Tabelle"};
-  return {roll,d50,note};
+  const p=Math.max(pa,0);
+  const [lo,hi,t]=br;
+  const r0=interp2(AFM_DATA.distPA,AFM_DATA.distT,T[lo].roll,p,o), r1=interp2(AFM_DATA.distPA,AFM_DATA.distT,T[hi].roll,p,o);
+  const d0=interp2(AFM_DATA.distPA,AFM_DATA.distT,T[lo].d50,p,o), d1=interp2(AFM_DATA.distPA,AFM_DATA.distT,T[hi].d50,p,o);
+  if(r0==null||r1==null||d0==null||d1==null) return {roll:null,d50:null,note:"außerhalb der Tabelle"};
+  return {roll:lerp(r0,r1,t),d50:lerp(d0,d1,t),note};
 }
 
 /* Zuschläge FBH-B 4.6 – Faktoren werden nacheinander angewendet */
@@ -115,7 +88,7 @@ function surfaceFactors(kind,surface,slope){
     if(g) roll.push(g);
   } else {
     if(slope<0) roll.push([`Neigung bergab ${-slope} %`,1+0.10*(-slope)]);
-    const g={"grass5":["Gras",1.30],"grass10":["Gras",1.30],"grass25":["Gras",1.30],"grasswet":["nasses Gras",1.15],"soft":["weicher Boden",1.15],"wet":["befestigte, nasse Piste",1.15]}[surface];
+    const g={"grass5":["Gras trocken ≤ 5 cm",1.30],"grass10":["Gras trocken > 5 cm (mind. 45 %)",1.45],"grass25":["Gras trocken > 5 cm (mind. 45 %)",1.45],"grasswet":["nasses Gras",1.15],"soft":["weicher Boden",1.15],"wet":["befestigte, nasse Piste",1.15]}[surface];
     if(g) roll.push(g);
   }
   return roll;
@@ -132,12 +105,12 @@ function windComponents(windDirTrue,windSpd,rwyMag,varE){
   return {head: windSpd*Math.cos(a), cross: Math.abs(windSpd*Math.sin(a))};
 }
 
-function runwayDistances(kind,pa,oat,headwind,surface,slope,fairingsOff){
-  const t = kind==="to" ? distTable(FBH.toRoll,FBH.to50,pa,oat) : distTable(FBH.ldRoll,FBH.ld50,pa,oat);
+function runwayDistances(kind,mass,pa,oat,headwind,surface,slope,fairingsOff){
+  const t = distMass(kind,mass,pa,oat);
   if(t.roll==null) return {ok:false,note:t.note};
   const steps=[];
   let roll=t.roll, d50=t.d50;
-  steps.push(["Tabellenwert (1310 kg)",roll,d50]);
+  steps.push(["AFM-Tabellenwert ("+Math.round(mass)+" kg)",roll,d50]);
   if(kind==="to" && fairingsOff){ roll+=20; d50+=30; steps.push(["ohne Radverkleidungen (+20/+30 m)",roll,d50]); }
   const wf=windFactor(kind,headwind||0);
   if(Math.abs(wf-1)>1e-6){ roll*=wf; d50*=wf; steps.push([(headwind>=0?"Gegenwind ":"Rückenwind ")+Math.abs(headwind).toFixed(0)+" kt ("+((wf-1)*100).toFixed(0)+" %)",roll,d50]); }
@@ -253,4 +226,4 @@ function tafTempAt(taf,t){
 }
 function fmtZ(d){ if(!d) return "—"; const p=n=>String(n).padStart(2,"0"); return p(d.getUTCDate())+"/"+p(d.getUTCHours())+p(d.getUTCMinutes())+"Z"; }
 
-if(typeof module!=="undefined") module.exports={FBH,cgFwdLimit,CG_AFT,interp2,pressAlt,tasFromIas,vrVapp,climbRoc,distTable,runwayDistances,windComponents,parseMetar,parseTaf,tafWindAt,tafTempAt,tafRelevant,tafCovers,fmtZ,windFactor};
+if(typeof module!=="undefined") module.exports={AFM_DATA,massBracket,distMass,cgFwdLimit,CG_AFT,interp2,pressAlt,tasFromIas,vrVapp,climbRoc,runwayDistances,windComponents,parseMetar,parseTaf,tafWindAt,tafTempAt,tafRelevant,tafCovers,fmtZ,windFactor};

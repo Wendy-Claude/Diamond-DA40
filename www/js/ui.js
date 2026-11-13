@@ -64,6 +64,11 @@ function compute(){
     if(mode==="manual"){ temp=num(a+"TempMan"); tsrc="manuell"; }
     else if(mode==="tx"){ if(o.taf&&o.taf.tx){ temp=o.taf.tx.val; tsrc="TAF TX (konservativ)"; } }
     else if(mode==="metar"){ if(o.metar&&o.metar.temp!=null){ temp=o.metar.temp; tsrc="METAR"; } }
+    else if(mode==="auto"){
+      const mt=(o.metar&&o.metar.time&&o.metar.temp!=null&&o.t)?resolveDay(o.metar.time.d,o.metar.time.h,o.metar.time.m,o.t):null;
+      if(mt&&Math.abs(mt-o.t)<=90*60000){ temp=o.metar.temp; tsrc="METAR "+fmtZ(mt)+" (innerhalb ±90 min)"; }
+      else if(ti){ temp=ti.val; tsrc="TAF TX/TN, "+ti.how; }
+    }
     else { if(ti){ temp=ti.val; tsrc="TAF TX/TN, "+ti.how; } }
     if(temp==null && o.metar&&o.metar.temp!=null && mode!=="manual"){ temp=o.metar.temp; tsrc="METAR (TAF ohne TX/TN)"; r.warn.push(`${o.icao||APNAME[a]}: Temperatur aus TAF nicht verfügbar – METAR-Wert verwendet.`); }
     o.temp=temp; o.tsrc=tsrc;
@@ -136,7 +141,7 @@ function compute(){
   if(F.method==="rule"&&F.afterLanding!=null&&F.afterLanding<10) r.warn.push(`Faustformel 6,6 USG/h nur zulässig, wenn nach der Landung noch 10 USG vorhanden sind (vorhanden: ${f1(F.afterLanding)} USG) – genaue Berechnung nach FHB-Tabellen erforderlich (FBH-B 5.3).`);
 
   /* Weight & Balance FBH-B 6.1 */
-  const W={}; r.wb=W; const A=FBH.arm, k=FBH.kgPerUSG;
+  const W={}; r.wb=W; const A=FBH.arm; const dens=densLoad(); const k=kgPerUsg(r.ap.dep&&r.ap.dep.temp,dens); r.kgPerUsg=k; r.density=fuelDensity(r.ap.dep&&r.ap.dep.temp,dens);
   const eM=num("emptyM")||0, eMo=num("emptyMom")||0;
   const front=(num("seatL")||0)+(num("seatR")||0), rear=(num("rearL")||0)+(num("rearR")||0), bf=num("bagF")||0, ba=num("bagA")||0;
   W.rows=[["Empty mass",eM,eM?eMo/eM:null,eMo],["Front seats",front,A.front,front*A.front],["Rear seats",rear,A.rear,rear*A.rear],["FWD Baggage",bf,A.fwdBag,bf*A.fwdBag],["AFT Baggage",ba,A.aftBag,ba*A.aftBag]];
@@ -159,20 +164,20 @@ function compute(){
   if(bf>FBH.maxFwdBag) r.warn.push(`FWD Baggage ${bf} kg > 45 kg.`);
   if(ba>FBH.maxAftBag) r.warn.push(`AFT Baggage ${ba} kg > 18 kg.`);
   if(bf+ba>FBH.maxBagTotal) r.warn.push(`Gepäckraum gesamt ${bf+ba} kg > 45 kg (FBH-B 7.2).`);
-  if(!eM) r.warn.push("Leermasse/Moment fehlen.");
+  if(!eM) r.warn.push("Leermasse/Moment für "+val("reg")+" fehlen – im Menü „Flugzeuge“ eintragen. Keine Berechnung von Masse und Schwerpunkt.");
 
   /* Performance FBH-B 4 */
   const P={}; r.perf=P; const fo=val("fairingsOff");
   P.vrTo=vrVapp(W.tom.m); P.vappDest=vrVapp(W.lmDest.m); P.vappAltn=W.lmAltn?vrVapp(W.lmAltn.m):null;
   const dep=r.ap.dep, dst=r.ap.dest, alt=r.ap.altn;
   const hw=o=>o.comp?o.comp.head:0;
-  if(dep&&dep.pa!=null&&dep.temp!=null) P.to=runwayDistances("to",dep.pa,dep.temp,hw(dep),dep.surf,dep.slope,fo);
-  if(dst&&dst.pa!=null&&dst.temp!=null) P.ldDest=runwayDistances("ld",dst.pa,dst.temp,hw(dst),dst.surf,dst.slope,false);
-  if(alt&&alt.pa!=null&&alt.temp!=null) P.ldAltn=runwayDistances("ld",alt.pa,alt.temp,hw(alt),alt.surf,alt.slope,false);
+  if(dep&&dep.pa!=null&&dep.temp!=null) P.to=runwayDistances("to",W.tom.m,dep.pa,dep.temp,hw(dep),dep.surf,dep.slope,fo);
+  if(dst&&dst.pa!=null&&dst.temp!=null) P.ldDest=runwayDistances("ld",W.lmDest.m,dst.pa,dst.temp,hw(dst),dst.surf,dst.slope,false);
+  if(alt&&alt.pa!=null&&alt.temp!=null) P.ldAltn=runwayDistances("ld",W.lmAltn.m,alt.pa,alt.temp,hw(alt),alt.surf,alt.slope,false);
   if(P.to&&P.to.ok&&P.ldDest) {}
   if(P.to&&P.to.ok){
     // Startabbruch bei VR: Start- + Landerollstrecke (FBH-B 4.6) am Startplatz
-    const l=runwayDistances("ld",dep.pa,dep.temp,hw(dep),dep.surf,dep.slope,false);
+    const l=runwayDistances("ld",W.tom.m,dep.pa,dep.temp,hw(dep),dep.surf,dep.slope,false);
     P.asd=l.ok?P.to.roll+l.roll:null;
     if(dep.len&&P.to.d50>dep.len) r.warn.push(`${dep.icao}: Startstrecke 15 m ${f0(P.to.d50)} m > TORA ${f0(dep.len)} m.`);
   }
@@ -194,8 +199,8 @@ function compute(){
     return {label,ias,roc,tas,gs,tail,grad:g,req,rocReq,ok:g>=req,note:c.note};
   };
   const rd=num("reqGradDep")||3.3, rg=num("reqGradGA")||2.5;
-  P.climbDep=[grad(FBH.crClimb,88,W.tom.m,dep,40,"Cruise Climb (flaps UP, 88 KIAS, 92 %)",rd),grad(FBH.toClimb,72,W.tom.m,dep,20,"Take-off Climb (flaps T/O, 72 KIAS, 92 %)",rd)].filter(Boolean);
-  P.climbGA=[grad(FBH.toClimb,72,W.lmDest.m,dst,20,"Take-off Climb (flaps T/O, 72 KIAS, 92 %)",rg),grad(FBH.crClimb,88,W.lmDest.m,dst,40,"Cruise Climb (flaps UP, 88 KIAS, 92 %)",rg)].filter(Boolean);
+  P.climbDep=[grad(AFM_DATA.climbCR,88,W.tom.m,dep,40,"Cruise Climb (flaps UP, 88 KIAS, 92 %)",rd),grad(AFM_DATA.climbTO,72,W.tom.m,dep,20,"Take-off Climb (flaps T/O, 72 KIAS, 92 %)",rd)].filter(Boolean);
+  P.climbGA=[grad(AFM_DATA.climbTO,72,W.lmDest.m,dst,20,"Take-off Climb (flaps T/O, 72 KIAS, 92 %)",rg),grad(AFM_DATA.climbCR,88,W.lmDest.m,dst,40,"Cruise Climb (flaps UP, 88 KIAS, 92 %)",rg)].filter(Boolean);
   if(P.climbDep.length&&P.climbDep.every(x=>x.grad!=null&&!x.ok)) r.warn.push(`Abflug ${dep.icao}: geforderter Steiggradient ${f1(rd)} % wird nicht erreicht.`);
   else if(P.climbDep[0]&&P.climbDep[0].grad!=null&&!P.climbDep[0].ok) r.warn.push(`Abflug ${dep.icao}: Cruise Climb erreicht ${f1(rd)} % nicht – Take-off Climb anwenden (FBH-B 4.3 / LB 2113 Kap. 1.5).`);
   if(P.climbGA[0]&&P.climbGA[0].grad!=null&&!P.climbGA[0].ok) r.warn.push(`Durchstarten ${dst.icao}: geforderter Steiggradient ${f1(rg)} % wird nicht erreicht.`);
@@ -238,26 +243,26 @@ function render(){
    ${fr("Extra fuel","FOB – Minimum",F.extra,F.extra<0?"bad":"")}
    </tbody></table><div class="kv"><span>Nach Landung DEST</span><b>${f1(F.afterLanding)} USG</b><span>Endurance (6,6 USG/h)</span><b>${F.endurance!=null?Math.floor(F.endurance/60)+" h "+String(Math.round(F.endurance%60)).padStart(2,"0")+" min":"—"}</b></div>`;
   // W&B
-  const W=r.wb;
+  const W=r.wb; { const m=num("emptyM"),mo=num("emptyMom"); $("emptyArm").value=m&&mo?(mo/m).toFixed(3).replace(".",","):"–"; }
   $("wbOut").innerHTML=`<table class="t"><thead><tr><th></th><th class="n">Masse kg</th><th class="n">Arm m</th><th class="n">Moment mkg</th><th class="n">max kg</th></tr></thead><tbody>
    ${W.rows.map(x=>`<tr><td>${x[0]}</td><td class="n">${f1(x[1])}</td><td class="n">${f1(x[2],3)}</td><td class="n">${f1(x[3])}</td><td class="n">${x[0]==="FWD Baggage"?45:x[0]==="AFT Baggage"?18:""}</td></tr>`).join("")}
    </tbody></table>
    <table class="t"><thead><tr><th>Phase</th><th class="n">Masse kg</th><th class="n">CG m</th><th class="n">zulässig m</th><th class="n">max kg</th></tr></thead><tbody>
    ${W.phases.map(p=>`<tr class="${(!p.okMass||(!p.okCg&&p!==W.ramp))?"bad":""}"><td>${p.name}</td><td class="n">${f1(p.m)}</td><td class="n">${f1(p.cg,3)}</td><td class="n">${f1(p.fwd,3)}–${f1(p.aft,2)}</td><td class="n">${p.max}</td></tr>`).join("")}
-   </tbody></table><div class="note">Treibstoff: ${f1(FBH.kgPerUSG,3)} kg/USG (FBH-B 6.1, JET A1), Arm 2,63 m. Landemasse ALTN ohne Warteverfahren-Verbrauch (konservativ schwer).</div>${cgSvg(W)}`;
+   </tbody></table><div class="note">Treibstoff: ${f1(r.kgPerUsg,3)} kg/USG (Dichte ${f1(r.density,3)} kg/l bei ${r.ap.dep&&r.ap.dep.temp!=null?f1(r.ap.dep.temp)+' °C OAT '+(r.ap.dep.icao||''):'15 °C (keine Temperatur)'}), Arm 2,63 m. Landemasse ALTN ohne Warteverfahren-Verbrauch (konservativ schwer).</div>${cgSvg(W)}`;
   // Performance
   const P=r.perf;
   const dRow=(lab,d)=>!d?`<tr><td>${lab}</td><td colspan="2" class="muted">Daten fehlen</td></tr>`:!d.ok?`<tr class="bad"><td>${lab}</td><td colspan="2">${esc(d.note)}</td></tr>`:`<tr><td>${lab}</td><td class="n">${f0(d.roll)}</td><td class="n">${f0(d.d50)}</td></tr>`;
   const steps=d=>d&&d.ok?`<div class="note">${d.steps.map(s=>esc(s[0])+": "+f0(s[1])+" / "+f0(s[2])+" m").join(" → ")}${d.note?" · "+esc(d.note):""}</div>`:"";
   const gRow=g=>g.grad==null?`<tr><td>${esc(g.label)}</td><td colspan="4">${esc(g.note)}</td></tr>`:`<tr class="${g.ok?"good":"bad"}"><td>${esc(g.label)}</td><td class="n">${f0(g.roc)}</td><td class="n">${f0(g.gs)}</td><td class="n">${f1(g.grad)} %</td><td class="n">${f1(g.req)} % / ${f0(g.rocReq)} ft/min</td></tr>`;
   $("perfOut").innerHTML=`<div class="kv"><span>V<sub>R</sub> (TOM ${f0(W.tom.m)} kg)</span><b>${P.vrTo.vr??"—"} KIAS</b><span>V<sub>APP</sub> DEST (LM ${f0(W.lmDest.m)} kg)</span><b>${P.vappDest.vapp??"—"} KIAS</b>${P.vappAltn?`<span>V<sub>APP</sub> ALTN (LM ${f0(W.lmAltn.m)} kg)</span><b>${P.vappAltn.vapp??"—"} KIAS</b>`:""}</div>
-   <table class="t"><thead><tr><th>Strecke (FBH-B 4.2 / 4.5)</th><th class="n">Rollstrecke m</th><th class="n">über 15 m/50 ft m</th></tr></thead><tbody>
+   <table class="t"><thead><tr><th>Strecke (AFM 5.3.7 / 5.3.12)</th><th class="n">Rollstrecke m</th><th class="n">über 15 m/50 ft m</th></tr></thead><tbody>
    ${dRow("Start "+(r.ap.dep.icao||"DEP"),P.to)}${dRow("Landung "+(r.ap.dest.icao||"DEST"),P.ldDest)}${r.withAlt?dRow("Landung "+(r.ap.altn.icao||"ALTN"),P.ldAltn):""}
    ${P.asd?`<tr><td>Startabbruch bei V<sub>R</sub> (Start- + Landerollstrecke)</td><td class="n">${f0(P.asd)}</td><td></td></tr>`:""}</tbody></table>
    ${steps(P.to)}${steps(P.ldDest)}${r.withAlt?steps(P.ldAltn):""}
    <h4>Steiggradient Abflug ${esc(r.ap.dep.icao)} (TOM)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbDep.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
    <h4>Steiggradient Durchstarten ${esc(r.ap.dest.icao)} (LM DEST)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbGA.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
-   <div class="note">Gradient [%] = ROC × 0,98 / GS (FBH-B 4.3). GS = TAS + Rückenwind; Gegenwind wird nicht angerechnet (ungünstigste Variante, LB 2113 Kap. 1.5). Start-/Landetabellen gelten für 1310 kg.</div>`;
+   <div class="note">Gradient [%] = ROC × 0,98 / GS (FBH-B 4.3). GS = TAS + Rückenwind; Gegenwind wird nicht angerechnet (ungünstigste Variante, LB 2113 Kap. 1.5). Start-/Landestrecken: AFM-Tabellen, interpoliert nach Masse (1100/1200/1280/1310 kg).</div>`;
   $("warnOut").innerHTML=r.warn.length?r.warn.map(w=>`<li>${esc(w)}</li>`).join(""):'<li class="ok">Keine Grenzwertüberschreitung erkannt.</li>';
   $("warnCount").textContent=r.warn.length;
   save();
@@ -307,13 +312,56 @@ async function offerFile(name,data){
 }
 
 /* ---------- Init ---------- */
-function setEmpty(){ const e=FBH.empty[val("reg")]; if(e){ $("emptyM").value=e[0]; $("emptyMom").value=e[1]; } }
+function setEmpty(){ const a=acLoad()[val("reg")]; if(acComplete(a)){ $("emptyM").value=a.mass; $("emptyMom").value=a.moment; } else { $("emptyM").value=""; $("emptyMom").value=""; } }
 document.addEventListener("input",e=>{ if(e.target.dataset&&e.target.dataset.k!==undefined){ if(e.target.id==="reg") setEmpty(); if(APS.includes(e.target.id)) wxLink(e.target.id); render(); } });
 document.addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.k!==undefined){ if(e.target.id==="reg") setEmpty(); render(); } });
 APS.forEach(a=>{ $(a+"Btn").onclick=()=>fetchWx(a); });
 $("btnBooklet").onclick=()=>makePdf("booklet");
 $("btnA5").onclick=()=>makePdf("a5");
 $("btnReset").onclick=()=>{ try{localStorage.removeItem("d40fpp");}catch(e){} location.reload(); };
-if(!load()){ $("dof").value=new Date().toISOString().slice(0,10); setEmpty(); }
+buildReg();
+if(!load()){ $("dof").value=new Date().toISOString().slice(0,10); }
+if(!acComplete(acLoad()[$("reg").value])){ const f=Object.keys(AC_DEFAULTS).find(k=>acComplete(acLoad()[k])); if(f) $("reg").value=f; }
+setEmpty(); initDensity(); initAcMenu();
 APS.forEach(wxLink);
 render();
+
+/* ---------- Registrationsauswahl, Dichte, Flugzeugmenue ---------- */
+function buildReg(){
+  const all=acLoad(), sel=$("reg"), cur=sel.value;
+  sel.innerHTML=Object.keys(AC_DEFAULTS).map(k=>`<option value="${k}">${k}${acComplete(all[k])?"":" – Daten fehlen"}</option>`).join("");
+  if(cur&&all[cur]) sel.value=cur;
+}
+function initDensity(){
+  const p=densLoad(); $("dens15").value=p.rho15; $("densK").value=p.kPerC;
+  const upd=()=>{ const a=parseFloat($("dens15").value.replace(",",".")), b=parseFloat($("densK").value.replace(",","."));
+    if(a>0.7&&a<0.9&&b>=0&&b<0.005){ densSave({rho15:a,kPerC:b}); render(); } };
+  $("dens15").oninput=upd; $("densK").oninput=upd;
+}
+function initAcMenu(){
+  const dlg=$("acDlg"), rows=$("acRows"), msg=$("acMsg");
+  const draw=(all)=>{
+    rows.innerHTML=Object.keys(AC_DEFAULTS).map(k=>{ const a=all[k]; const arm=acComplete(a)?(a.moment/a.mass).toFixed(3).replace(".",","):"–";
+      return `<div class="acr" data-reg="${k}"><div class="reg">${k}</div>
+        <label>Leermasse (kg)<input data-f="mass" inputmode="decimal" value="${a.mass??""}"></label>
+        <label>Moment (mkg)<input data-f="moment" inputmode="decimal" value="${a.moment??""}"></label>
+        <div class="wide"><label>Wägedatum<input data-f="date" type="date" value="${esc(a.date||"")}"></label><label>Notiz<input data-f="note" value="${esc(a.note||"")}"></label></div>
+        <div class="st ${acComplete(a)?"ok":"miss"}">${acComplete(a)?"bereit · Hebelarm "+arm+" m":"Daten fehlen – Berechnung gesperrt"}</div></div>`; }).join("");
+  };
+  const read=()=>{ const out={}, errs=[];
+    rows.querySelectorAll(".acr").forEach(r=>{ const k=r.dataset.reg, o={};
+      r.querySelectorAll("input").forEach(i=>{ o[i.dataset.f]=i.value; });
+      const m=o.mass===""?null:parseFloat(String(o.mass).replace(",",".")), mo=o.moment===""?null:parseFloat(String(o.moment).replace(",","."));
+      if((m==null)!==(mo==null)) errs.push(k+": Masse und Moment gemeinsam eintragen.");
+      else if(m!=null){ if(!(m>700&&m<1100)) errs.push(k+": Leermasse "+m+" kg nicht plausibel (700–1100 kg).");
+        else if(!(mo/m>2.0&&mo/m<3.0)) errs.push(k+": Hebelarm "+(mo/m).toFixed(2)+" m nicht plausibel (2,0–3,0 m)."); }
+      out[k]={mass:m,moment:mo,date:o.date||"",note:o.note||""}; });
+    return {out,errs}; };
+  $("btnAc").onclick=()=>{ draw(acLoad()); msg.textContent=""; dlg.showModal(); };
+  $("acClose").onclick=()=>dlg.close();
+  $("acSave").onclick=()=>{ const {out,errs}=read(); if(errs.length){ msg.innerHTML=errs.map(esc).join("<br>"); msg.style.color="#c8102e"; return; }
+    acSave(out); draw(out); buildReg(); setEmpty(); render(); msg.style.color=""; msg.textContent="Gespeichert."; };
+  $("acReset").onclick=()=>{ if(confirm("Alle Flugzeugdaten auf die Ausgangswerte zurücksetzen?")){ try{localStorage.removeItem(AC_KEY);}catch(e){} const a=acLoad(); draw(a); buildReg(); setEmpty(); render(); msg.textContent="Zurückgesetzt."; } };
+  $("acExport").onclick=()=>offerFile("D40_Flugzeugdaten.json",JSON.stringify(acLoad(),null,2));
+  $("acImport").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); const o={}; for(const k of Object.keys(AC_DEFAULTS)) if(j[k]) o[k]=Object.assign({},AC_DEFAULTS[k],j[k]); acSave(o); draw(acLoad()); buildReg(); setEmpty(); render(); msg.style.color=""; msg.textContent="Importiert – bitte prüfen und speichern."; }catch(err){ msg.style.color="#c8102e"; msg.textContent="Datei ungültig."; } e.target.value=""; };
+}

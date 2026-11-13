@@ -60,3 +60,12 @@ body.noalt .altonly{display:none} body:not(.noalt) .noaltonly{display:none}
 footer{font-size:12px;color:var(--muted);text-align:center;padding:16px}
 .chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)} .chk input{width:auto}
 details summary{cursor:pointer;color:var(--olive);font-size:13px;margin:6px 0}
+
+.cabin{position:relative;max-width:340px;margin:8px auto}
+.cabin svg{width:100%;display:block}
+.cabin input{position:absolute;width:17%;transform:translate(-50%,-50%);text-align:center;padding:5px 2px;font-weight:700}
+dialog{border:0;border-radius:8px;padding:14px;max-width:560px;width:calc(100% - 24px);max-height:92vh;overflow:auto}
+dialog::backdrop{background:rgba(31,36,25,.6)}
+.acr{display:grid;grid-template-columns:70px 1fr 1fr;gap:6px;align-items:end;border-bottom:1px solid var(--line);padding:8px 0}
+.acr .reg{font-weight:700;padding-bottom:8px}.acr .wide{grid-column:2/4;display:grid;grid-template-columns:1fr 2fr;gap:6px}
+.acr .st{grid-column:1/4;font-size:12px}.acr .st.ok{color:var(--good)}.acr .st.miss{color:#c57a00}.acr .st.bad{color:var(--red)}

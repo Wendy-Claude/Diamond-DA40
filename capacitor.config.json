@@ -1,5 +1,13 @@
 {
   "appId": "at.d40.performancefuel",
   "appName": "D40 Performance & Fuel",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "allowMixedContent": false
+  }
 }

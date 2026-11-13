@@ -24,7 +24,7 @@
   <div class="g">
     <label>Datum (DOF)<input type="date" id="dof" data-k></label>
     <label>Rufzeichen<input id="cs" data-k placeholder="z.B. MOETA 1"></label>
-    <label>Registration<select id="reg" data-k><option>3H-DA</option><option>3H-DB</option><option>3H-DC</option><option>3H-DD</option></select></label>
+    <label>Registration<select id="reg" data-k></select></label>
     <label>Flugregeln<select id="rules" data-k><option>IFR</option><option>VFR</option></select></label>
     <label>Startflugplatz (ICAO)<input id="dep" data-k maxlength="4" placeholder="LOWL" style="text-transform:uppercase"></label>
     <label>Zielflugplatz (ICAO)<input id="dest" data-k maxlength="4" placeholder="LOWS" style="text-transform:uppercase"></label>
@@ -34,6 +34,7 @@
     <label>Anflug IAF → Landung (min)<input id="apprMin" data-k inputmode="decimal" value="15"></label>
     <label class="altonly">EET DEST → IAF ALTN (min)<input id="eetAltn" data-k inputmode="decimal" value="30"></label>
   </div>
+  <div class="row" style="margin-top:8px"><button type="button" class="btn s o" id="btnAc">Flugzeuge / Leermassen bearbeiten</button></div>
   <div class="note" id="etaOut"></div>
 </section>
 
@@ -68,7 +69,7 @@
 <label>TORA (m)<input id="depLen" data-k inputmode="decimal"></label>
 <label>Belag<select id="depSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
 <label>Neigung (% + bergauf)<input id="depSlope" data-k inputmode="decimal" value="0"></label>
-<label>Temperatur<select id="depTempMode" data-k><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>Temperatur<select id="depTempMode" data-k><option value="auto" selected>Automatisch (METAR ±90 min, sonst TAF TX/TN)</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="depTempMan" data-k inputmode="decimal"></label>
 <label>Wind manuell (ddd/ff)<input id="depWindMan" data-k placeholder="leer = TAF"></label>
 <label>QNH manuell (hPa)<input id="depQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
@@ -82,7 +83,7 @@
 <label>LDA (m)<input id="destLen" data-k inputmode="decimal"></label>
 <label>Belag<select id="destSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
 <label>Neigung (% + bergauf)<input id="destSlope" data-k inputmode="decimal" value="0"></label>
-<label>Temperatur<select id="destTempMode" data-k><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>Temperatur<select id="destTempMode" data-k><option value="auto" selected>Automatisch (METAR ±90 min, sonst TAF TX/TN)</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="destTempMan" data-k inputmode="decimal"></label>
 <label>Wind manuell (ddd/ff)<input id="destWindMan" data-k placeholder="leer = TAF"></label>
 <label>QNH manuell (hPa)<input id="destQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
@@ -96,7 +97,7 @@
 <label>LDA (m)<input id="altnLen" data-k inputmode="decimal"></label>
 <label>Belag<select id="altnSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
 <label>Neigung (% + bergauf)<input id="altnSlope" data-k inputmode="decimal" value="0"></label>
-<label>Temperatur<select id="altnTempMode" data-k><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>Temperatur<select id="altnTempMode" data-k><option value="auto" selected>Automatisch (METAR ±90 min, sonst TAF TX/TN)</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="altnTempMan" data-k inputmode="decimal"></label>
 <label>Wind manuell (ddd/ff)<input id="altnWindMan" data-k placeholder="leer = TAF"></label>
 <label>QNH manuell (hPa)<input id="altnQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
@@ -113,20 +114,42 @@
     <label class="altonly">Leistung Warteverfahren (%)<select id="holdPwr" data-k><option>45</option><option>50</option><option>55</option><option>60</option><option>65</option><option>70</option><option selected>75</option></select></label>
     <label>Fuel on board (USG)<input id="fob" data-k inputmode="decimal" value="39"></label>
   </div>
+  <div class="g" style="margin-top:10px">
+    <label>Dichte Jet A-1 bei 15 °C (kg/l)<input id="dens15" inputmode="decimal"></label>
+    <label>Dichteänderung je °C (kg/l)<input id="densK" inputmode="decimal"></label>
+  </div>
+  <div class="note">Die Dichte folgt der Temperatur (OAT am Startplatz) und bestimmt die Treibstoffmasse in kg.</div>
   <div id="fuelOut"></div>
 </section>
 
 <section>
   <h2>Weight &amp; Balance (FBH-B 6.1)</h2>
   <div class="g">
-    <label>Leermasse (kg)<input id="emptyM" data-k inputmode="decimal"></label>
-    <label>Leermoment (mkg)<input id="emptyMom" data-k inputmode="decimal"></label>
-    <label>Front seat links (kg)<input id="seatL" data-k inputmode="decimal" value="85"></label>
-    <label>Front seat rechts (kg)<input id="seatR" data-k inputmode="decimal" value="85"></label>
-    <label>Rear seat links (kg)<input id="rearL" data-k inputmode="decimal" value="0"></label>
-    <label>Rear seat rechts (kg)<input id="rearR" data-k inputmode="decimal" value="0"></label>
-    <label>FWD Baggage (kg, max 45)<input id="bagF" data-k inputmode="decimal" value="5"></label>
-    <label>AFT Baggage (kg, max 18)<input id="bagA" data-k inputmode="decimal" value="0"></label>
+    <label>Leermasse (kg)<input id="emptyM" data-k inputmode="decimal" readonly></label>
+    <label>Leermoment (mkg)<input id="emptyMom" data-k inputmode="decimal" readonly></label>    <label>Schwerpunkt Leermasse (m)<input id="emptyArm" readonly tabindex="-1"></label>
+  </div>
+  <div class="note">Beladung in kg direkt an den Plätzen eintragen (Draufsicht, Nase oben).</div>
+  <div class="cabin" id="cabin">
+    <svg viewBox="0 0 300 360" aria-hidden="true">
+      <path d="M150 8 C176 8 188 40 190 90 L192 250 C192 300 170 340 150 352 C130 340 108 300 108 250 L110 90 C112 40 124 8 150 8 Z" fill="#fff" stroke="#3f4736" stroke-width="2"/>
+      <path d="M110 110 L8 150 L8 172 L110 160 Z M190 110 L292 150 L292 172 L190 160 Z" fill="#f0f2ea" stroke="#3f4736" stroke-width="2"/>
+      <path d="M118 326 L70 344 L70 354 L124 348 Z M182 326 L230 344 L230 354 L176 348 Z" fill="#f0f2ea" stroke="#3f4736" stroke-width="2"/>
+      <rect x="95" y="90" width="50" height="50" rx="6" fill="#eceee7" stroke="#8a907e"/><rect x="155" y="90" width="50" height="50" rx="6" fill="#eceee7" stroke="#8a907e"/>
+      <rect x="95" y="175" width="50" height="50" rx="6" fill="#eceee7" stroke="#8a907e"/><rect x="155" y="175" width="50" height="50" rx="6" fill="#eceee7" stroke="#8a907e"/>
+      <rect x="110" y="248" width="80" height="44" rx="6" fill="#f6efe0" stroke="#8a907e"/><rect x="118" y="302" width="64" height="34" rx="6" fill="#f6efe0" stroke="#8a907e"/>
+      <g font-size="9" fill="#6b7064" text-anchor="middle">
+        <text x="120" y="84">Front links</text><text x="180" y="84">Front rechts</text><text x="120" y="169">Rear links</text><text x="180" y="169">Rear rechts</text>
+        <text x="150" y="244">FWD Baggage · max 45 kg</text><text x="150" y="299" style="display:none"></text><text x="150" y="348">AFT Baggage · max 18 kg</text>
+      </g>
+      <g font-size="8.5" fill="#c8102e" text-anchor="start"><text x="212" y="118">Arm 2,30 m</text><text x="212" y="203">Arm 3,25 m</text><text x="196" y="274">3,89 m</text><text x="188" y="323">4,54 m</text></g>
+      <text x="150" y="26" font-size="9" fill="#6b7064" text-anchor="middle">NASE</text>
+    </svg>
+    <input id="seatL" data-k inputmode="decimal" value="85" style="left:40%;top:31.9%" aria-label="Front seat links kg">
+    <input id="seatR" data-k inputmode="decimal" value="85" style="left:60%;top:31.9%" aria-label="Front seat rechts kg">
+    <input id="rearL" data-k inputmode="decimal" value="0" style="left:40%;top:55.6%" aria-label="Rear seat links kg">
+    <input id="rearR" data-k inputmode="decimal" value="0" style="left:60%;top:55.6%" aria-label="Rear seat rechts kg">
+    <input id="bagF" data-k inputmode="decimal" value="5" style="left:50%;top:75%" aria-label="FWD Baggage kg">
+    <input id="bagA" data-k inputmode="decimal" value="0" style="left:50%;top:88.6%" aria-label="AFT Baggage kg">
   </div>
   <div id="wbOut"></div>
 </section>
@@ -153,8 +176,24 @@
 </main>
 <footer>Planungshilfe – ersetzt nicht die Prüfung durch den verantwortlichen Piloten. Maßgeblich: FHB/AFM, FBH-B D40 und offizielles Flugwetter-Briefing.</footer>
 
+
+<dialog id="acDlg">
+  <h2>Flugzeuge · Basisleermassen</h2>
+  <div class="note">Werte aus dem Weight and Balance Report. Masse in kg, Moment in mkg. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.</div>
+  <div id="acRows"></div>
+  <div class="row" style="margin-top:12px">
+    <button class="btn" id="acSave">Speichern</button>
+    <button class="btn o" id="acReset">Ausgangswerte</button>
+    <button class="btn o" id="acExport">Export</button>
+    <label class="btn o" style="flex-direction:row;cursor:pointer">Import<input type="file" id="acImport" accept="application/json" hidden></label>
+    <button class="btn o" id="acClose">Schließen</button>
+  </div>
+  <div class="note" id="acMsg"></div>
+</dialog>
 <script src="js/brand-assets.js"></script>
 <script src="lib/jspdf.umd.min.js"></script>
+<script src="js/aircraft.js"></script>
+<script src="js/afm-data.js"></script>
 <script src="js/core.js"></script>
 <script src="js/pdf.js"></script>
 <script src="js/ui.js"></script>

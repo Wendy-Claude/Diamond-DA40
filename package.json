@@ -5,7 +5,8 @@
   "description": "D40 Performance & Fuel - Leistungs- und Treibstoffberechnung DA40 NG",
   "scripts": {
     "icons": "python3 scripts/make_icons.py",
-    "serve": "npx http-server www -p 8080"
+    "serve": "npx http-server www -p 8080",
+    "test": "node test/afm-data.test.js && node test/core.test.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

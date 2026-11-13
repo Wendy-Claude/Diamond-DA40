@@ -125,7 +125,7 @@ function pdfPages(r){
     pg.frame("TREIBSTOFFBERECHNUNG");
     pg.para(`Berechnung gemäß FBH-B 5.3 (${r.ifr?"IFR":"VFR"}). Methode: ${F.method==="rule"?"Faustformel 6,6 USG/h":"FHB-Tabelle 4.4, "+r.cruisePwr+" % = "+f1(F.ffCruise)+" USG/h"+(r.climbMin?" · Steigflug "+f0(r.climbMin)+" min @ 92 % = 8,3 USG/h":"")}.`,6.8);
     const rows=[["Position","Grundlage","Zeit","USG","kg"]];
-    const kg=v=>f1(v*FBH.kgPerUSG);
+    const kg=v=>f1(v*(r.kgPerUsg||kgPerUsg(15)));
     rows.push(["Taxi fuel","1 USG","",f1(F.taxi),kg(F.taxi)]);
     rows.push(["Trip fuel",(r.ifr?"Start bis IAF":"Start bis Landung")+(r.ifr?" + 2 USG Anflug":""),f0(r.eetDest)+" min",f1(F.trip),kg(F.trip)]);
     rows.push(["Contingency fuel","10 % vom Trip fuel","",f1(F.cont),kg(F.cont)]);
@@ -191,7 +191,7 @@ function pdfPages(r){
     pg.table([34,36,24,26],dr,{head:true,align:["","","r","r"],sz:6.8});
     const st=(lab,dd)=>{ if(dd&&dd.ok) pg.para(lab+": "+dd.steps.map(s=>s[0]+" "+f0(s[1])+"/"+f0(s[2])+" m").join("  >  ")+(dd.note?" · "+dd.note:""),5.9); };
     st("Start",P.to); st("Landung DEST",P.ldDest); if(r.withAlt) st("Landung ALTN",P.ldAltn);
-    pg.para("Tabellen gelten für 1310 kg (FHB-Werte für MTOM). Zuschläge gemäß 4.6 nacheinander angewendet; Wind auf Roll- und Gesamtstrecke, Neigung/Belag auf die Rollstrecke."+(r.fairingsOff?" Ohne Radverkleidungen: +20 m / +30 m (Start), Steigrate -20/-40 ft/min.":""),5.9);
+    pg.para("Start-/Landestrecken aus AFM-Tabellen (Kap. 5.3.7/5.3.12), interpoliert nach Masse. Zuschläge nacheinander angewendet; Wind auf Roll- und Gesamtstrecke, Neigung/Belag auf die Rollstrecke."+(r.fairingsOff?" Ohne Radverkleidungen: +20 m / +30 m (Start), Steigrate -20/-40 ft/min.":""),5.9);
     const gt=(title,arr)=>{ pg.h(title); const rows=[["Verfahren","ROC","TAS / GS","Gradient","gefordert"]];
       arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label,f0(g.roc)+" ft/min",f0(g.tas)+" / "+f0(g.gs)+" kt",f1(g.grad)+" %",f1(g.req)+" % = "+f0(g.rocReq)+" ft/min"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
       if(arr.length===0) rows.push(["Daten fehlen","","","",""]);
