@@ -194,9 +194,9 @@ function compute(){
     const tas=tasFromIas(ias,o.pa,o.temp);
     const tail=o.comp&&o.comp.head<0?-o.comp.head:0;
     const gs=tas+tail; // ungünstigste Variante: kein Gegenwind angerechnet
-    const gross=roc*0.98/gs; const mgIn=num("gradMargin"); const margin=mgIn==null?0.8:mgIn; const g=gross-margin;
-    const rocReq=(req+margin)*gs/0.98;
-    return {label,ias,roc,tas,gs,tail,grad:g,gross,margin,req,rocReq,ok:g>=req,note:c.note};
+    const g=roc*0.98/gs;
+    const rocReq=req*gs/0.98;
+    return {label,ias,roc,tas,gs,tail,grad:g,req,rocReq,ok:g>=req,note:c.note};
   };
   const rd=num("reqGradDep")||3.3, rg=num("reqGradGA")||2.5;
   P.climbDep=[grad(AFM_DATA.climbCR,88,W.tom.m,dep,40,"Cruise Climb (flaps UP, 88 KIAS, 92 %)",rd),grad(AFM_DATA.climbTO,72,W.tom.m,dep,20,"Take-off Climb (flaps T/O, 72 KIAS, 92 %)",rd)].filter(Boolean);
@@ -254,15 +254,15 @@ function render(){
   const P=r.perf;
   const dRow=(lab,d)=>!d?`<tr><td>${lab}</td><td colspan="2" class="muted">Daten fehlen</td></tr>`:!d.ok?`<tr class="bad"><td>${lab}</td><td colspan="2">${esc(d.note)}</td></tr>`:`<tr><td>${lab}</td><td class="n">${f0(d.roll)}</td><td class="n">${f0(d.d50)}</td></tr>`;
   const steps=d=>d&&d.ok?`<div class="note">${d.steps.map(s=>esc(s[0])+": "+f0(s[1])+" / "+f0(s[2])+" m").join(" → ")}${d.note?" · "+esc(d.note):""}</div>`:"";
-  const gRow=g=>g.grad==null?`<tr><td>${esc(g.label)}</td><td colspan="4">${esc(g.note)}</td></tr>`:`<tr class="${g.ok?"good":"bad"}"><td>${esc(g.label)}</td><td class="n">${f0(g.roc)}</td><td class="n">${f0(g.gs)}</td><td class="n">${f1(g.grad)} % <small>(brutto ${f1(g.gross)} %)</small></td><td class="n">${f1(g.req)} % / ${f0(g.rocReq)} ft/min</td></tr>`;
+  const gRow=g=>g.grad==null?`<tr><td>${esc(g.label)}</td><td colspan="4">${esc(g.note)}</td></tr>`:`<tr class="${g.ok?"good":"bad"}"><td>${esc(g.label)}</td><td class="n">${f0(g.roc)}</td><td class="n">${f0(g.gs)}</td><td class="n">${f1(g.grad)} %</td><td class="n">${f1(g.req)} % / ${f0(g.rocReq)} ft/min</td></tr>`;
   $("perfOut").innerHTML=`<div class="kv"><span>V<sub>R</sub> (TOM ${f0(W.tom.m)} kg)</span><b>${P.vrTo.vr??"—"} KIAS</b><span>V<sub>APP</sub> DEST (LM ${f0(W.lmDest.m)} kg)</span><b>${P.vappDest.vapp??"—"} KIAS</b>${P.vappAltn?`<span>V<sub>APP</sub> ALTN (LM ${f0(W.lmAltn.m)} kg)</span><b>${P.vappAltn.vapp??"—"} KIAS</b>`:""}</div>
    <table class="t"><thead><tr><th>Strecke (AFM 5.3.7 / 5.3.12)</th><th class="n">Rollstrecke m</th><th class="n">über 15 m/50 ft m</th></tr></thead><tbody>
    ${dRow("Start "+(r.ap.dep.icao||"DEP"),P.to)}${dRow("Landung "+(r.ap.dest.icao||"DEST"),P.ldDest)}${r.withAlt?dRow("Landung "+(r.ap.altn.icao||"ALTN"),P.ldAltn):""}
    ${P.asd?`<tr><td>Startabbruch bei V<sub>R</sub> (Start- + Landerollstrecke)</td><td class="n">${f0(P.asd)}</td><td></td></tr>`:""}</tbody></table>
    ${steps(P.to)}${steps(P.ldDest)}${r.withAlt?steps(P.ldAltn):""}
-   <h4>Steiggradient Abflug ${esc(r.ap.dep.icao)} (TOM)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient netto</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbDep.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
-   <h4>Steiggradient Durchstarten ${esc(r.ap.dest.icao)} (LM DEST)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient netto</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbGA.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
-   <div class="note">Brutto-Gradient [%] = ROC × 0,98 / GS (AFM 5.3.8, FBH-B 4.3); netto = brutto − Abschlag (Standard 0,8 %-Punkte, einstellbar). GS = TAS + Rückenwind; Gegenwind wird nicht angerechnet (ungünstigste Variante, LB 2113 Kap. 1.5). Start-/Landestrecken: AFM-Tabellen, interpoliert nach Masse (1100/1200/1280/1310 kg).</div>`;
+   <h4>Steiggradient Abflug ${esc(r.ap.dep.icao)} (TOM)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbDep.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
+   <h4>Steiggradient Durchstarten ${esc(r.ap.dest.icao)} (LM DEST)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbGA.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
+   <div class="note">Gradient [%] = ROC × 0,98 / GS (FBH-B 4.3). GS = TAS + Rückenwind; Gegenwind wird nicht angerechnet (ungünstigste Variante, LB 2113 Kap. 1.5). Start-/Landestrecken: AFM-Tabellen, interpoliert nach Masse (1100/1200/1280/1310 kg).</div>`;
   $("warnOut").innerHTML=r.warn.length?r.warn.map(w=>`<li>${esc(w)}</li>`).join(""):'<li class="ok">Keine Grenzwertüberschreitung erkannt.</li>';
   $("warnCount").textContent=r.warn.length;
   save();
