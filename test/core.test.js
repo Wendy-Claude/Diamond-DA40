@@ -50,4 +50,11 @@ const AP=require("../www/js/airports-at.js");
 assert.equal(Object.keys(AP.AIRPORTS_AT).length,55);
 assert.equal(AP.AIRPORTS_AT.LOWW[1],600); assert.equal(AP.AIRPORTS_AT.LOXZ[1],2264); assert.equal(AP.AIRPORTS_AT.LOXT[0],"Tulln");
 for(const [k,v] of Object.entries(AP.AIRPORTS_AT)) assert.ok(v[1]>300&&v[1]<4000,k+" Hoehe "+v[1]);
+// Zuschlaege FBH-B 4.6
+let sf=C.surfaceFactors("to",{grass:"g10",wet:true,soft:true},1).map(x=>x[1]); assert.deepEqual(sf,[1.15,1.30,1.20,1.50]);
+sf=C.surfaceFactors("ld",{wet:true},-2).map(x=>x[1]); assert.deepEqual(sf,[1.2,1.15]);
+x=C.runwayDistances("to",1310,0,0,0,{grass:"g5"},0,false); near(x.roll,365*1.1,0.6); near(x.d50,550+36.5,0.6);
+// AIP AD 2.13 Declared distances
+assert.equal(AP.AIP_RWY.LOWG["16C"].int.length,4); assert.equal(AP.AIP_RWY.LOWG["16C"].int[0].from,"TWY C"); assert.equal(AP.AIP_RWY.LOWG["16C"].int[0].tora,2217);
+assert.equal(AP.AIP_RWY.LOWW["29"].int.length,5); assert.equal(AP.AIP_RWY.LOWL["26"].tora,3000);
 console.log("core OK");

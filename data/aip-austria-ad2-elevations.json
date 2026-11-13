@@ -277,5 +277,1119 @@
    2264,
    "Militärflugplatz"
   ]
+ },
+ "runways": {
+  "LOWG": {
+   "16C": {
+    "tora": 3000,
+    "toda": 3060,
+    "asda": 3000,
+    "lda": 2740,
+    "int": [
+     {
+      "from": "TWY C",
+      "tora": 2217,
+      "toda": 2277,
+      "asda": 2217
+     },
+     {
+      "from": "TWY B",
+      "tora": 1695,
+      "toda": 1755,
+      "asda": 1695
+     },
+     {
+      "from": "TWY Z",
+      "tora": 1640,
+      "toda": 1700,
+      "asda": 1640
+     },
+     {
+      "from": "TWY Y",
+      "tora": 771,
+      "toda": 831,
+      "asda": 771
+     }
+    ]
+   },
+   "34C": {
+    "tora": 3000,
+    "toda": 3000,
+    "asda": 3000,
+    "lda": 3000,
+    "int": [
+     {
+      "from": "TWY Y",
+      "tora": 2276,
+      "toda": 2276,
+      "asda": 2276
+     },
+     {
+      "from": "TWY B",
+      "tora": 1377,
+      "toda": 1377,
+      "asda": 1377
+     },
+     {
+      "from": "TWY Z",
+      "tora": 1371,
+      "toda": 1371,
+      "asda": 1371
+     },
+     {
+      "from": "TWY C",
+      "tora": 895,
+      "toda": 895,
+      "asda": 895
+     }
+    ]
+   },
+   "16L": {
+    "tora": 640,
+    "toda": 640,
+    "asda": 640,
+    "lda": 640,
+    "int": []
+   },
+   "34R": {
+    "tora": 640,
+    "toda": 640,
+    "asda": 640,
+    "lda": 640,
+    "int": []
+   },
+   "16R": {
+    "tora": 760,
+    "toda": 760,
+    "asda": 760,
+    "lda": 610,
+    "int": []
+   },
+   "34L": {
+    "tora": 760,
+    "toda": 760,
+    "asda": 760,
+    "lda": 610,
+    "int": []
+   }
+  },
+  "LOWI": {
+   "08": {
+    "tora": 2000,
+    "toda": 2000,
+    "asda": 2000,
+    "lda": 1940,
+    "int": [
+     {
+      "from": "TWY Y",
+      "tora": 1806,
+      "toda": 1806,
+      "asda": 1806
+     },
+     {
+      "from": "TWY A",
+      "tora": 1586,
+      "toda": 1586,
+      "asda": 1586
+     },
+     {
+      "from": "TWY Z",
+      "tora": 671,
+      "toda": 671,
+      "asda": 671
+     }
+    ]
+   },
+   "26": {
+    "tora": 1940,
+    "toda": 2000,
+    "asda": 1940,
+    "lda": 1940,
+    "int": [
+     {
+      "from": "TWY B",
+      "tora": 1602,
+      "toda": 1662,
+      "asda": 1602
+     },
+     {
+      "from": "TWY Z",
+      "tora": 1282,
+      "toda": 1342,
+      "asda": 1282
+     }
+    ]
+   }
+  },
+  "LOWK": {
+   "10L": {
+    "tora": 2720,
+    "toda": 2780,
+    "asda": 2720,
+    "lda": 2520,
+    "int": [
+     {
+      "from": "TWY B",
+      "tora": 2460,
+      "toda": 2520,
+      "asda": 2460
+     },
+     {
+      "from": "TWY C",
+      "tora": 2115,
+      "toda": 2175,
+      "asda": 2115
+     }
+    ]
+   },
+   "28R": {
+    "tora": 2720,
+    "toda": 2720,
+    "asda": 2720,
+    "lda": 2720,
+    "int": []
+   },
+   "10R": {
+    "tora": 710,
+    "toda": 710,
+    "asda": 710,
+    "lda": 610,
+    "int": []
+   },
+   "28L": {
+    "tora": 710,
+    "toda": 710,
+    "asda": 710,
+    "lda": 610,
+    "int": []
+   }
+  },
+  "LOWL": {
+   "08": {
+    "tora": 3000,
+    "toda": 3060,
+    "asda": 3000,
+    "lda": 2750,
+    "int": []
+   },
+   "26": {
+    "tora": 3000,
+    "toda": 3000,
+    "asda": 3000,
+    "lda": 2850,
+    "int": []
+   }
+  },
+  "LOWS": {
+   "15": {
+    "tora": 2805,
+    "toda": 2910,
+    "asda": 2805,
+    "lda": 2505,
+    "int": [
+     {
+      "from": "TWY B",
+      "tora": 2505,
+      "toda": 2610,
+      "asda": 2505
+     },
+     {
+      "from": "TWY C",
+      "tora": 1449,
+      "toda": 1554,
+      "asda": 1449
+     },
+     {
+      "from": "TWY S",
+      "tora": 1449,
+      "toda": 1554,
+      "asda": 1449
+     }
+    ]
+   },
+   "33": {
+    "tora": 2810,
+    "toda": 2810,
+    "asda": 2810,
+    "lda": 2610,
+    "int": [
+     {
+      "from": "TWY E",
+      "tora": 2378,
+      "toda": 2378,
+      "asda": 2378
+     },
+     {
+      "from": "TWY D",
+      "tora": 1720,
+      "toda": 1720,
+      "asda": 1720
+     },
+     {
+      "from": "TWY C",
+      "tora": 1339,
+      "toda": 1339,
+      "asda": 1339
+     },
+     {
+      "from": "TWY S",
+      "tora": 1339,
+      "toda": 1339,
+      "asda": 1339
+     }
+    ]
+   }
+  },
+  "LOWW": {
+   "11": {
+    "tora": 3500,
+    "toda": 3560,
+    "asda": 3500,
+    "lda": 3500,
+    "int": [
+     {
+      "from": "TWY A11",
+      "tora": 3390,
+      "toda": 3450,
+      "asda": 3390
+     },
+     {
+      "from": "TWY A10",
+      "tora": 3001,
+      "toda": 3061,
+      "asda": 3001
+     },
+     {
+      "from": "TWY A9",
+      "tora": 2458,
+      "toda": 2518,
+      "asda": 2458
+     },
+     {
+      "from": "TWY A7",
+      "tora": 1930,
+      "toda": 1990,
+      "asda": 1930
+     }
+    ]
+   },
+   "29": {
+    "tora": 3500,
+    "toda": 3560,
+    "asda": 3500,
+    "lda": 3500,
+    "int": [
+     {
+      "from": "TWY A2",
+      "tora": 3404,
+      "toda": 3464,
+      "asda": 3404
+     },
+     {
+      "from": "TWY A3",
+      "tora": 3158,
+      "toda": 3218,
+      "asda": 3158
+     },
+     {
+      "from": "TWY A4",
+      "tora": 2639,
+      "toda": 2699,
+      "asda": 2639
+     },
+     {
+      "from": "TWY A6",
+      "tora": 2116,
+      "toda": 2176,
+      "asda": 2116
+     },
+     {
+      "from": "TWY A8",
+      "tora": 1340,
+      "toda": 1400,
+      "asda": 1340
+     }
+    ]
+   },
+   "16": {
+    "tora": 3600,
+    "toda": 3660,
+    "asda": 3600,
+    "lda": 3600,
+    "int": [
+     {
+      "from": "TWY B2",
+      "tora": 3470,
+      "toda": 3530,
+      "asda": 3470
+     },
+     {
+      "from": "TWY B4",
+      "tora": 2482,
+      "toda": 2542,
+      "asda": 2482
+     },
+     {
+      "from": "TWY B5",
+      "tora": 2219,
+      "toda": 2279,
+      "asda": 2219
+     },
+     {
+      "from": "TWY B7",
+      "tora": 1806,
+      "toda": 1866,
+      "asda": 1806
+     },
+     {
+      "from": "TWY B9",
+      "tora": 1373,
+      "toda": 1433,
+      "asda": 1373
+     }
+    ]
+   },
+   "34": {
+    "tora": 3600,
+    "toda": 3660,
+    "asda": 3600,
+    "lda": 3600,
+    "int": [
+     {
+      "from": "TWY B11",
+      "tora": 3448,
+      "toda": 3508,
+      "asda": 3448
+     },
+     {
+      "from": "TWY B10",
+      "tora": 2336,
+      "toda": 2396,
+      "asda": 2336
+     },
+     {
+      "from": "TWY B8",
+      "tora": 1949,
+      "toda": 2009,
+      "asda": 1949
+     },
+     {
+      "from": "TWY B6",
+      "tora": 1492,
+      "toda": 1552,
+      "asda": 1492
+     }
+    ]
+   }
+  },
+  "LOAA": {
+   "03": {
+    "tora": 230,
+    "toda": 541,
+    "asda": 541,
+    "lda": null,
+    "int": []
+   },
+   "21": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 541,
+    "int": []
+   }
+  },
+  "LOAB": {
+   "11": {
+    "tora": 865,
+    "toda": 865,
+    "asda": 865,
+    "lda": null,
+    "int": []
+   },
+   "29": {
+    "tora": 865,
+    "toda": 865,
+    "asda": 865,
+    "lda": 865,
+    "int": []
+   }
+  },
+  "LOAD": {
+   "25": {
+    "tora": 501,
+    "toda": 501,
+    "asda": 576,
+    "lda": 436,
+    "int": []
+   }
+  },
+  "LOAG": {},
+  "LOAN": {
+   "09": {
+    "tora": 1067,
+    "toda": 1327,
+    "asda": 1227,
+    "lda": 1067,
+    "int": []
+   },
+   "27": {
+    "tora": 1067,
+    "toda": 1322,
+    "asda": 1227,
+    "lda": 1067,
+    "int": []
+   }
+  },
+  "LOAR": {
+   "03": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": null,
+    "int": []
+   },
+   "21": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOAS": {},
+  "LOAU": {},
+  "LOAV": {
+   "13R": {
+    "tora": 950,
+    "toda": 950,
+    "asda": 1002,
+    "lda": 950,
+    "int": []
+   },
+   "31L": {
+    "tora": 950,
+    "toda": 950,
+    "asda": 950,
+    "lda": 950,
+    "int": []
+   }
+  },
+  "LOGF": {
+   "12": {
+    "tora": 700,
+    "toda": 700,
+    "asda": 700,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOGG": {
+   "14": {
+    "tora": 800,
+    "toda": 800,
+    "asda": 800,
+    "lda": null,
+    "int": []
+   },
+   "32": {
+    "tora": 800,
+    "toda": 800,
+    "asda": 800,
+    "lda": 800,
+    "int": []
+   }
+  },
+  "LOGI": {
+   "11": {
+    "tora": 635,
+    "toda": 785,
+    "asda": 785,
+    "lda": null,
+    "int": []
+   },
+   "29": {
+    "tora": 635,
+    "toda": 785,
+    "asda": 785,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOGK": {
+   "06": {
+    "tora": 600,
+    "toda": 600,
+    "asda": 600,
+    "lda": null,
+    "int": []
+   },
+   "24": {
+    "tora": 600,
+    "toda": 600,
+    "asda": 600,
+    "lda": 600,
+    "int": []
+   }
+  },
+  "LOGL": {
+   "07": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 475,
+    "int": []
+   },
+   "25": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 475,
+    "int": []
+   }
+  },
+  "LOGM": {
+   "14L": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": null,
+    "int": []
+   },
+   "32R": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": 500,
+    "int": []
+   },
+   "14R": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": 500,
+    "int": []
+   },
+   "32L": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": 500,
+    "int": []
+   }
+  },
+  "LOGO": {
+   "03": {
+    "tora": 730,
+    "toda": 730,
+    "asda": 730,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOGP": {
+   "14": {
+    "tora": 630,
+    "toda": 630,
+    "asda": 630,
+    "lda": null,
+    "int": []
+   },
+   "32": {
+    "tora": 630,
+    "toda": 630,
+    "asda": 630,
+    "lda": 630,
+    "int": []
+   }
+  },
+  "LOGT": {
+   "11": {
+    "tora": 625,
+    "toda": 625,
+    "asda": 625,
+    "lda": null,
+    "int": []
+   },
+   "29": {
+    "tora": 625,
+    "toda": 625,
+    "asda": 625,
+    "lda": 625,
+    "int": []
+   }
+  },
+  "LOGW": {
+   "18": {
+    "tora": 440,
+    "toda": 440,
+    "asda": 440,
+    "lda": null,
+    "int": []
+   },
+   "36": {
+    "tora": 440,
+    "toda": 440,
+    "asda": 440,
+    "lda": 440,
+    "int": []
+   }
+  },
+  "LOIH": {},
+  "LOIJ": {},
+  "LOIK": {
+   "05": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 700,
+    "int": []
+   },
+   "23": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 454,
+    "int": []
+   }
+  },
+  "LOIR": {
+   "04": {
+    "tora": 621,
+    "toda": 679,
+    "asda": 679,
+    "lda": null,
+    "int": []
+   },
+   "22": {
+    "tora": 679,
+    "toda": 679,
+    "asda": 679,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOKF": {
+   "02": {
+    "tora": 700,
+    "toda": 700,
+    "asda": 700,
+    "lda": null,
+    "int": []
+   },
+   "20": {
+    "tora": 700,
+    "toda": 700,
+    "asda": 700,
+    "lda": 700,
+    "int": []
+   }
+  },
+  "LOKG": {
+   "04": {
+    "tora": 618,
+    "toda": 618,
+    "asda": 618,
+    "lda": null,
+    "int": []
+   },
+   "22": {
+    "tora": 618,
+    "toda": 618,
+    "asda": 618,
+    "lda": 618,
+    "int": []
+   }
+  },
+  "LOKH": {
+   "17": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 484,
+    "int": []
+   },
+   "35": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 707,
+    "int": []
+   }
+  },
+  "LOKL": {
+   "12": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": null,
+    "int": []
+   },
+   "30": {
+    "tora": 500,
+    "toda": 500,
+    "asda": 500,
+    "lda": 500,
+    "int": []
+   }
+  },
+  "LOKM": {
+   "08": {
+    "tora": 400,
+    "toda": 400,
+    "asda": 400,
+    "lda": null,
+    "int": []
+   },
+   "26": {
+    "tora": 400,
+    "toda": 400,
+    "asda": 400,
+    "lda": 400,
+    "int": []
+   }
+  },
+  "LOKN": {
+   "09": {
+    "tora": 710,
+    "toda": 710,
+    "asda": 710,
+    "lda": null,
+    "int": []
+   },
+   "27": {
+    "tora": 710,
+    "toda": 710,
+    "asda": 710,
+    "lda": 710,
+    "int": []
+   }
+  },
+  "LOKR": {
+   "06": {
+    "tora": 400,
+    "toda": 400,
+    "asda": 400,
+    "lda": null,
+    "int": []
+   },
+   "24": {
+    "tora": 400,
+    "toda": 400,
+    "asda": 400,
+    "lda": 400,
+    "int": []
+   }
+  },
+  "LOKW": {
+   "36": {
+    "tora": 740,
+    "toda": 740,
+    "asda": 770,
+    "lda": null,
+    "int": []
+   },
+   "18": {
+    "tora": 740,
+    "toda": 740,
+    "asda": 740,
+    "lda": 740,
+    "int": []
+   }
+  },
+  "LOLC": {},
+  "LOLE": {},
+  "LOLF": {},
+  "LOLG": {
+   "03": {
+    "tora": 480,
+    "toda": 480,
+    "asda": 480,
+    "lda": null,
+    "int": []
+   },
+   "21": {
+    "tora": 480,
+    "toda": 480,
+    "asda": 480,
+    "lda": 480,
+    "int": []
+   }
+  },
+  "LOLH": {
+   "08": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 480,
+    "int": []
+   },
+   "26": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 500,
+    "int": []
+   }
+  },
+  "LOLK": {
+   "11": {
+    "tora": 730,
+    "toda": 730,
+    "asda": 730,
+    "lda": null,
+    "int": []
+   },
+   "29": {
+    "tora": 730,
+    "toda": 730,
+    "asda": 730,
+    "lda": 730,
+    "int": []
+   }
+  },
+  "LOLM": {
+   "13": {
+    "tora": 465,
+    "toda": 465,
+    "asda": 465,
+    "lda": null,
+    "int": []
+   },
+   "31": {
+    "tora": 465,
+    "toda": 465,
+    "asda": 465,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOLO": {},
+  "LOLS": {
+   "13": {
+    "tora": 800,
+    "toda": 800,
+    "asda": 800,
+    "lda": null,
+    "int": []
+   },
+   "31": {
+    "tora": 800,
+    "toda": 800,
+    "asda": 800,
+    "lda": null,
+    "int": []
+   }
+  },
+  "LOLT": {
+   "09": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 700,
+    "int": []
+   },
+   "27": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 830,
+    "int": []
+   }
+  },
+  "LOLU": {},
+  "LOLW": {
+   "08L": {
+    "tora": 1319,
+    "toda": 1390,
+    "asda": 1390,
+    "lda": 1291,
+    "int": []
+   },
+   "26R": {
+    "tora": 1291,
+    "toda": 1390,
+    "asda": 1390,
+    "lda": 1319,
+    "int": []
+   },
+   "08R": {
+    "tora": 800,
+    "toda": 900,
+    "asda": 900,
+    "lda": 900,
+    "int": []
+   },
+   "26L": {
+    "tora": 900,
+    "toda": 900,
+    "asda": 900,
+    "lda": 800,
+    "int": []
+   }
+  },
+  "LOSM": {
+   "07": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 700,
+    "int": []
+   },
+   "25": {
+    "tora": null,
+    "toda": null,
+    "asda": null,
+    "lda": 700,
+    "int": []
+   }
+  },
+  "LOWZ": {
+   "07": {
+    "tora": 780,
+    "toda": 780,
+    "asda": 780,
+    "lda": 660,
+    "int": []
+   },
+   "25": {
+    "tora": 780,
+    "toda": 780,
+    "asda": 780,
+    "lda": 660,
+    "int": []
+   }
+  },
+  "LOXA": {
+   "06": {
+    "tora": 925,
+    "toda": 925,
+    "asda": 925,
+    "lda": 925,
+    "int": []
+   },
+   "24": {
+    "tora": 925,
+    "toda": 925,
+    "asda": 925,
+    "lda": 725,
+    "int": []
+   }
+  },
+  "LOXN": {
+   "14L": {
+    "tora": 940,
+    "toda": 940,
+    "asda": 940,
+    "lda": 940,
+    "int": []
+   },
+   "32R": {
+    "tora": 940,
+    "toda": 940,
+    "asda": 940,
+    "lda": 940,
+    "int": []
+   },
+   "14R": {
+    "tora": 940,
+    "toda": 940,
+    "asda": 940,
+    "lda": 940,
+    "int": []
+   },
+   "32L": {
+    "tora": 940,
+    "toda": 940,
+    "asda": 940,
+    "lda": 940,
+    "int": []
+   },
+   "18L": {
+    "tora": 1620,
+    "toda": 1620,
+    "asda": 1620,
+    "lda": 1620,
+    "int": []
+   },
+   "36R": {
+    "tora": 1620,
+    "toda": 1620,
+    "asda": 1620,
+    "lda": 1320,
+    "int": []
+   },
+   "18R": {
+    "tora": 870,
+    "toda": 870,
+    "asda": 870,
+    "lda": 870,
+    "int": []
+   },
+   "36L": {
+    "tora": 870,
+    "toda": 870,
+    "asda": 870,
+    "lda": 870,
+    "int": []
+   }
+  },
+  "LOXT": {
+   "08L": {
+    "tora": 1400,
+    "toda": 1400,
+    "asda": 1400,
+    "lda": 1400,
+    "int": [
+     {
+      "from": "TWY C",
+      "tora": 1150,
+      "toda": 1150,
+      "asda": 1150
+     },
+     {
+      "from": "TWY B",
+      "tora": 780,
+      "toda": 780,
+      "asda": 780
+     },
+     {
+      "from": "TWY X",
+      "tora": 1130,
+      "toda": 1130,
+      "asda": 1130
+     }
+    ]
+   },
+   "26R": {
+    "tora": 1400,
+    "toda": 1400,
+    "asda": 1400,
+    "lda": 1400,
+    "int": [
+     {
+      "from": "TWY B",
+      "tora": 580,
+      "toda": 580,
+      "asda": 580
+     }
+    ]
+   }
+  },
+  "LOXZ": {
+   "08R": {
+    "tora": 2750,
+    "toda": 2750,
+    "asda": 2750,
+    "lda": 2600,
+    "int": []
+   },
+   "26L": {
+    "tora": 2750,
+    "toda": 2750,
+    "asda": 2750,
+    "lda": 2600,
+    "int": []
+   }
+  }
  }
 }

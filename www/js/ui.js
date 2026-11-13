@@ -97,7 +97,7 @@ function compute(guess){
       }
     }
     o.wind=w;
-    o.surf=val(a+"Surf"); o.slope=num(a+"Slope")||0; o.len=num(a+"Len");
+    o.surf={grass:val(a+"Grass")?val(a+"GrassLen"):"",wet:!!val(a+"Wet"),soft:!!val(a+"Soft")}; o.slope=num(a+"Slope")||0; o.len=num(a+"Len"); o.rwyAip=val(a+"RwyAip")||""; o.surch=surfaceFactors(a==="dep"?"to":"ld",o.surf,o.slope);
     o.comp=null;
     if(w&&o.rwy!=null){
       if(w.vrb||w.dir==null){ o.comp={head:-w.spd,cross:w.spd,vrb:true}; }
@@ -214,6 +214,9 @@ function compute(guess){
     // Startabbruch bei VR: Start- + Landerollstrecke (FBH-B 4.6) am Startplatz
     const l=runwayDistances("ld",W.tom.m,dep.pa,dep.temp,hw(dep),dep.surf,dep.slope,false);
     P.asd=l.ok?P.to.roll+l.roll:null;
+    { const rw=dep.rwyAip&&typeof AIP_RWY!=="undefined"&&AIP_RWY[dep.icao]&&AIP_RWY[dep.icao][dep.rwyAip];
+      if(rw&&rw.tora){ const list=[{from:"volle Pistenlänge",tora:rw.tora,toda:rw.toda,asda:rw.asda}].concat(rw.int||[]);
+        P.ints={icao:dep.icao,rwy:dep.rwyAip,rows:list.map(x=>{ const o={...x,okRoll:P.to.roll<=x.tora,okD50:x.toda!=null&&P.to.d50<=x.toda,okAsd:P.asd!=null&&x.asda!=null&&P.asd<=x.asda,afm:P.to.d50<=x.tora}; o.ok=o.okRoll&&o.okD50&&o.okAsd; return o; })}; } }
     if(dep.len&&P.to.d50>dep.len) r.warn.push(`${dep.icao}: Startstrecke 15 m ${f0(P.to.d50)} m > TORA ${f0(dep.len)} m.`);
   }
   if(P.ldDest&&P.ldDest.ok&&dst.len&&P.ldDest.d50>dst.len) r.warn.push(`${dst.icao}: Landestrecke 15 m ${f0(P.ldDest.d50)} m > LDA ${f0(dst.len)} m.`);
@@ -314,6 +317,11 @@ function render(){
    <h4>Steiggradient Abflug ${esc(r.ap.dep.icao)} (TOM)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbDep.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
    <h4>Steiggradient Durchstarten ${esc(r.ap.dest.icao)} (LM DEST)</h4><table class="t"><thead><tr><th>Verfahren</th><th class="n">ROC ft/min</th><th class="n">GS kt</th><th class="n">Gradient</th><th class="n">gefordert</th></tr></thead><tbody>${P.climbGA.map(gRow).join("")||'<tr><td colspan="5" class="muted">Daten fehlen</td></tr>'}</tbody></table>
    <div class="note">Gradient [%] = ROC × 0,98 / GS (FBH-B 4.3). GS = TAS + Rückenwind; Gegenwind wird nicht angerechnet (ungünstigste Variante, LB 2113 Kap. 1.5). Start-/Landestrecken: AFM-Tabellen, interpoliert nach Masse (1100/1200/1280/1310 kg).</div>`;
+  for(const a of APS){ const o=r.ap[a], n=$(a+"Surch"); if(!n) continue;
+    n.innerHTML=!o?"":(o.surch.length?"<b>Zuschläge "+(a==="dep"?"Start":"Landung")+":</b> "+o.surch.map(s=>esc(s[0])+" +"+f0((s[1]-1)*100)+" % <small>("+esc(s[2])+")</small>").join(" · "):"Keine Zuschläge für Belag/Neigung (befestigte, trockene Piste). Wind wird automatisch berücksichtigt (FBH-B 4.6.1)."); }
+  if(P.ints){ const I=P.ints, ck=b=>b?'<td class="n ok">✓</td>':'<td class="n no">✗</td>';
+    $("perfOut").insertAdjacentHTML("beforeend",`<h4>Intersection-Starts ${esc(I.icao)} RWY ${esc(I.rwy)} (AIP AD 2.13)</h4><table class="t ints"><thead><tr><th>Startpunkt</th><th class="n">TORA</th><th class="n">TODA</th><th class="n">ASDA</th><th class="n">Roll ≤ TORA</th><th class="n">15 m ≤ TODA</th><th class="n">Abbruch ≤ ASDA</th><th>Ergebnis</th></tr></thead><tbody>${I.rows.map(x=>`<tr><td>${esc(x.from)}</td><td class="n">${f0(x.tora)}</td><td class="n">${f0(x.toda)}</td><td class="n">${f0(x.asda)}</td>${ck(x.okRoll)}${ck(x.okD50)}${ck(x.okAsd)}<td class="${x.ok?"ok":"no"}">${x.ok?"ausreichend":"nicht ausreichend"}${x.ok&&!x.afm?" <small>(15 m > TORA, AFM-Warnung)</small>":""}</td></tr>`).join("")}</tbody></table>
+    <div class="note">Benötigt: Startrollstrecke ${f0(P.to.roll)} m, Startstrecke über 15 m ${f0(P.to.d50)} m, Startabbruch bei V<sub>R</sub> (Start- + Landerollstrecke, FBH-B 4.6) ${f0(P.asd)} m – jeweils inkl. Zuschläge. AFM 5.3.7: Die verfügbare Pistenlänge muss mindestens der Startstrecke über 15 m entsprechen.</div>`); }
   $("warnOut").innerHTML=r.warn.length?r.warn.map(w=>`<li>${esc(w)}</li>`).join(""):'<li class="ok">Keine Grenzwertüberschreitung erkannt.</li>';
   $("warnCount").textContent=r.warn.length;
   save();
@@ -441,6 +449,11 @@ function initAirports(){
   const apply=a=>{ const e=$(a+"Elev"), n=$(a+"ElevNote"); const hit=apLookup(val(a));
     if(hit){ if(!e.value||e.dataset.auto==="1"){ e.value=hit.elev; e.dataset.auto="1"; } n.textContent=e.dataset.auto==="1"?`${hit.name}: ${hit.elev} ft – ${hit.src}`:""; }
     else { if(e.dataset.auto==="1"){ e.value=""; delete e.dataset.auto; } n.textContent=(val(a)||"").length===4?"Platz nicht in der Datenbank – Höhe manuell eingeben.":""; } };
+  const rwySel=a=>{ const s=$(a+"RwyAip"), R=(typeof AIP_RWY!=="undefined"&&AIP_RWY[(val(a)||"").toUpperCase()])||{}, cur=s.value;
+    const ks=Object.keys(R).filter(k=>a==="dep"?R[k].tora:R[k].lda);
+    s.innerHTML='<option value="">– manuell –</option>'+ks.map(k=>`<option value="${k}">${k} · ${a==="dep"?"TORA "+R[k].tora:"LDA "+R[k].lda} m${R[k].int&&R[k].int.length&&a==="dep"?" · "+R[k].int.length+" Intersections":""}</option>`).join("");
+    if(ks.includes(cur)) s.value=cur; else { const rn=String(val(a+"Rwy")||"").replace(/\D/g,""); const m=ks.find(k=>rn&&k.replace(/\D/g,"")===rn.padStart(2,"0")); if(m) s.value=m; } };
+  ["dep","dest","altn"].forEach(a=>{ rwySel(a); $(a).addEventListener("input",()=>rwySel(a)); $(a+"RwyAip").addEventListener("change",()=>{ const k=$(a+"RwyAip").value, R=AIP_RWY[(val(a)||"").toUpperCase()]; if(k&&R&&R[k]){ $(a+"Rwy").value=k.replace(/\D/g,""); $(a+"Len").value=a==="dep"?R[k].tora:R[k].lda; } render(); }); });
   ["dep","dest","altn"].forEach(a=>{ const e=$(a+"Elev"); const n=document.createElement("div"); n.className="note"; n.id=a+"ElevNote"; e.parentElement.appendChild(n);
     e.addEventListener("input",()=>{ delete e.dataset.auto; n.textContent=""; }); $(a).addEventListener("input",()=>{ apply(a); render(); }); apply(a); });
   const dlg=$("apDlg");

@@ -79,19 +79,29 @@ function distMass(kind,mass,pa,oat){
 }
 
 /* Zuschläge FBH-B 4.6 – Faktoren werden nacheinander angewendet */
+/** Zuschlaege FBH-B 4.6 (S. 92/93). surface = {grass:""|"g5"|"g10"|"g25", wet:bool, soft:bool} (alte Textwerte werden umgesetzt).
+    Rueckgabe: [[Bezeichnung, Faktor, Quelle], ...] - jeweils auf die Rollstrecke, nacheinander angewendet. */
+function surfaceObj(s){
+  if(s&&typeof s==="object") return s;
+  return ({paved:{},wet:{wet:true},grass5:{grass:"g5"},grass10:{grass:"g10"},grass25:{grass:"g25"},grasswet:{grass:"g5",wet:true},soft:{soft:true}})[s]||{};
+}
 function surfaceFactors(kind,surface,slope){
-  // returns {roll:[...[label,factor]], all:[...]} ; "all" gilt für Roll- und Gesamtstrecke (Wind)
-  const roll=[];
+  const s=surfaceObj(surface), out=[];
   if(kind==="to"){
-    if(slope>0) roll.push([`Neigung bergauf ${slope} %`,1+0.15*slope]);
-    const g={"grass5":["Gras 0–5 cm",1.10],"grass10":["Gras 5–10 cm",1.30],"grass25":["Gras 10–25 cm",1.45],"grasswet":["nasses Gras",1.20],"soft":["weicher Boden",1.50]}[surface];
-    if(g) roll.push(g);
+    if(slope>0) out.push([`Neigung bergauf ${slope} %`,1+0.15*slope,"FBH-B 4.6.2, S. 92"]);
+    const g={g5:["Graspiste 0–5 cm",1.10],g10:["Graspiste 5–10 cm",1.30],g25:["Graspiste 10–25 cm",1.45]}[s.grass];
+    if(g) out.push([g[0],g[1],"FBH-B 4.6.3, S. 92"]);
+    if(s.grass&&s.wet) out.push(["nasses Gras",1.20,"FBH-B 4.6.3, S. 92"]);
+    if(s.soft) out.push(["weicher Boden",1.50,"FBH-B 4.6.3, S. 92"]);
   } else {
-    if(slope<0) roll.push([`Neigung bergab ${-slope} %`,1+0.10*(-slope)]);
-    const g={"grass5":["Gras trocken ≤ 5 cm",1.30],"grass10":["Gras trocken > 5 cm (mind. 45 %)",1.45],"grass25":["Gras trocken > 5 cm (mind. 45 %)",1.45],"grasswet":["nasses Gras",1.15],"soft":["weicher Boden",1.15],"wet":["befestigte, nasse Piste",1.15]}[surface];
-    if(g) roll.push(g);
+    if(slope<0) out.push([`Neigung bergab ${-slope} %`,1+0.10*(-slope),"FBH-B 4.6.2, S. 92"]);
+    if(s.grass==="g5") out.push(["Graspiste 0–5 cm",1.30,"FBH-B 4.6.3, S. 92"]);
+    else if(s.grass) out.push(["Graspiste > 5 cm",1.45,"AFM 5.3.12: mind. +45 % (FBH-B 4.6.3: +30 %)"]);
+    if(s.grass&&s.wet) out.push(["nasses Gras",1.15,"FBH-B 4.6.3, S. 92"]);
+    if(!s.grass&&s.wet) out.push(["befestigte, nasse Piste",1.15,"FBH-B 4.6.4, S. 93"]);
+    if(s.soft) out.push(["weicher Boden",1.15,"FBH-B 4.6.3, S. 92"]);
   }
-  return roll;
+  return out;
 }
 function windFactor(kind,headwind){ // headwind >0 Gegenwind, <0 Rückenwind (kt)
   if(headwind>=0) return 1 - 0.10*headwind/(kind==="to"?12:20);
@@ -111,11 +121,11 @@ function runwayDistances(kind,mass,pa,oat,headwind,surface,slope,fairingsOff){
   const steps=[];
   let roll=t.roll, d50=t.d50;
   steps.push(["AFM-Tabellenwert ("+Math.round(mass)+" kg)",roll,d50]);
-  if(kind==="to" && fairingsOff){ roll+=20; d50+=30; steps.push(["ohne Radverkleidungen (+20/+30 m)",roll,d50]); }
+  if(kind==="to" && fairingsOff){ roll+=20; d50+=30; steps.push(["ohne Radverkleidungen +20/+30 m (AFM 5.3.7)",roll,d50]); }
   const wf=windFactor(kind,headwind||0);
-  if(Math.abs(wf-1)>1e-6){ roll*=wf; d50*=wf; steps.push([(headwind>=0?"Gegenwind ":"Rückenwind ")+Math.abs(headwind).toFixed(0)+" kt ("+((wf-1)*100).toFixed(0)+" %)",roll,d50]); }
-  for(const [lab,f] of surfaceFactors(kind,surface,slope)){
-    const inc=roll*(f-1); roll+=inc; d50+=inc; steps.push([lab+" (+"+((f-1)*100).toFixed(0)+" % Rollstrecke)",roll,d50]);
+  if(Math.abs(wf-1)>1e-6){ roll*=wf; d50*=wf; steps.push([(headwind>=0?"Gegenwind ":"Rückenwind ")+Math.abs(headwind).toFixed(0)+" kt "+((wf-1)*100>=0?"+":"")+((wf-1)*100).toFixed(0)+" % (FBH-B 4.6.1, S. 92)",roll,d50]); }
+  for(const [lab,f,ref] of surfaceFactors(kind,surface,slope)){
+    const inc=roll*(f-1); roll+=inc; d50+=inc; steps.push([lab+" +"+((f-1)*100).toFixed(0)+" % Rollstrecke ("+ref+")",roll,d50]);
   }
   return {ok:true,roll,d50,steps,note:t.note};
 }
@@ -258,4 +268,4 @@ function tafTempAt(taf,t){
 }
 function fmtZ(d){ if(!d) return "—"; const p=n=>String(n).padStart(2,"0"); return p(d.getUTCDate())+"/"+p(d.getUTCHours())+p(d.getUTCMinutes())+"Z"; }
 
-if(typeof module!=="undefined") module.exports={AFM_DATA,isaTemp,climbToAlt,cruiseTas,massBracket,distMass,cgFwdLimit,CG_AFT,interp2,pressAlt,tasFromIas,vrVapp,climbRoc,runwayDistances,windComponents,parseMetar,parseTaf,tafWindAt,tafTempAt,tafRelevant,tafCovers,fmtZ,windFactor};
+if(typeof module!=="undefined") module.exports={surfaceFactors,AFM_DATA,isaTemp,climbToAlt,cruiseTas,massBracket,distMass,cgFwdLimit,CG_AFT,interp2,pressAlt,tasFromIas,vrVapp,climbRoc,runwayDistances,windComponents,parseMetar,parseTaf,tafWindAt,tafTempAt,tafRelevant,tafCovers,fmtZ,windFactor};

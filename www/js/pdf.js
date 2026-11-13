@@ -177,13 +177,19 @@ function pdfPages(r){
     gt(`Abflug ${ap.dep.icao||""} (TOM)`,P.climbDep);
     gt(`Durchstarten ${ap.dest.icao||""} (LM)`,P.climbGA);
     pg.para("Gradient = ROC x 0,98 / GS (AFM 5.3.8 / FBH-B 4.3), GS = TAS + Rückenwind.",5.6);
-    pg.h(`Hinweise (${r.warn.length})`);
-    if(!r.warn.length) pg.para("Keine Grenzwertüberschreitung erkannt.",6);
-    else { pg.color(C.bad); r.warn.slice(0,7).forEach(w=>pg.para("• "+w,5.7)); if(r.warn.length>7) pg.para(`… und ${r.warn.length-7} weitere (siehe App).`,5.6); }
-    pg.y=Math.max(pg.y,pg.H-38);
-    pg.table([50,50,50],[["Verantwortlicher Pilot (PIC)","Fluglehrer / Flugauftragserteilender","Datum / Uhrzeit"]],{head:true,sz:6.0,zebra:false});
-    { const w3=(pg.W-2*pg.m)/3; pg.stroke(C.line); pg.d.setLineWidth(0.2); for(let i=0;i<3;i++) pg.d.rect(pg.X(pg.m+i*w3),pg.y-2,w3,13); pg.y+=13; }
-    pg.para(`Grundlage: AFM DA 40 NG Rev 4, ${FBH.stand}. Erstellt ${new Date().toISOString().slice(0,16).replace("T"," ")} UTC. Ersetzt nicht die Prüfung durch den verantwortlichen Piloten.`,5.3);
+    const zs=[["dep","Start"],["dest","Landung"]].concat(r.withAlt?[["altn","Landung"]]:[]).map(([a,k])=>ap[a]&&ap[a].surch&&ap[a].surch.length?`${k} ${ap[a].icao||""}: `+ap[a].surch.map(s=>s[0]+" +"+f0((s[1]-1)*100)+" % ("+s[2]+")").join(", "):null).filter(Boolean);
+    if(zs.length) pg.para("Zuschläge (inkl. in den Strecken): "+zs.join(" · "),5.6);
+    if(P.ints){ const I=P.ints; const rows=[[`Intersection-Starts ${I.icao} RWY ${I.rwy}`,"TORA","TODA","ASDA","Ergebnis"]];
+      I.rows.forEach(x=>{ const row=[x.from,f0(x.tora),f0(x.toda),f0(x.asda),x.ok?"ausreichend":"nicht ausreichend"]; row._st={color:x.ok?C.good:C.bad}; rows.push(row); });
+      pg.table([40,16,16,16,30],rows,{head:true,align:["","r","r","r",""],sz:5.9});
+      pg.para(`Benötigt inkl. Zuschläge: Rollstrecke ${f0(P.to.roll)} m ≤ TORA, Startstrecke 15 m ${f0(P.to.d50)} m ≤ TODA, Startabbruch ${f0(P.asd)} m ≤ ASDA (AIP AD 2.13, FBH-B 4.6).`,5.4); }
+    const sigTop=pg.H-11-22; // Unterschriftenblock immer ueber der Fusszeile
+    if(pg.y<sigTop-8){ pg.h(`Hinweise (${r.warn.length})`);
+      if(!r.warn.length) pg.para("Keine Grenzwertüberschreitung erkannt.",5.6);
+      else { pg.color(C.bad); let i=0; while(i<r.warn.length&&pg.y<sigTop-6){ pg.para("• "+r.warn[i],5.4); i++; } if(i<r.warn.length) pg.para(`… und ${r.warn.length-i} weitere (siehe App).`,5.3); } }
+    pg.y=Math.max(pg.y,sigTop);
+    pg.table([50,50,50],[["Verantwortlicher Pilot (PIC)","Fluglehrer / Flugauftragserteilender","Datum / Uhrzeit"]],{head:true,sz:5.8,zebra:false});
+    { const w3=(pg.W-2*pg.m)/3; pg.stroke(C.line); pg.d.setLineWidth(0.2); for(let i=0;i<3;i++) pg.d.rect(pg.X(pg.m+i*w3),pg.y-2,w3,12); }
   });
   return pages;
 }

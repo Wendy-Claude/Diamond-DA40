@@ -72,9 +72,10 @@
 <label style="margin-top:6px">TAF<textarea id="depTaf" data-k rows="3" placeholder="TAF …"></textarea></label>
 <div class="g" style="margin-top:8px">
 <label>Platzhöhe (ft)<input id="depElev" data-k inputmode="decimal"></label>
+<label>Piste laut AIP<select id="depRwyAip"><option value="">– manuell –</option></select></label>
 <label>Piste (z.B. 26 oder 263°)<input id="depRwy" data-k inputmode="decimal"></label>
 <label>TORA (m)<input id="depLen" data-k inputmode="decimal"></label>
-<label>Belag<select id="depSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
+<div class="surf" style="grid-column:1/-1"><div class="swrow"><label class="sw"><input type="checkbox" id="depGrass" data-k><span></span></label><span>Graspiste</span><select id="depGrassLen" data-k style="width:auto"><option value="g5">0–5 cm</option><option value="g10">5–10 cm</option><option value="g25">10–25 cm</option></select></div><div class="swrow"><label class="sw"><input type="checkbox" id="depWet" data-k><span></span></label><span>nass</span></div><div class="swrow"><label class="sw"><input type="checkbox" id="depSoft" data-k><span></span></label><span>weicher Boden</span></div><div class="note" id="depSurch"></div></div>
 <label>Neigung (% + bergauf)<input id="depSlope" data-k inputmode="decimal" value="0"></label>
 <label>Temperatur<select id="depTempMode" data-k><option value="tx" selected>TAF Maximum (TX), sonst METAR</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="depTempMan" data-k inputmode="decimal"></label>
@@ -86,9 +87,10 @@
 <label style="margin-top:6px">TAF<textarea id="destTaf" data-k rows="3" placeholder="TAF …"></textarea></label>
 <div class="g" style="margin-top:8px">
 <label>Platzhöhe (ft)<input id="destElev" data-k inputmode="decimal"></label>
+<label>Piste laut AIP<select id="destRwyAip"><option value="">– manuell –</option></select></label>
 <label>Piste (z.B. 26 oder 263°)<input id="destRwy" data-k inputmode="decimal"></label>
 <label>LDA (m)<input id="destLen" data-k inputmode="decimal"></label>
-<label>Belag<select id="destSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
+<div class="surf" style="grid-column:1/-1"><div class="swrow"><label class="sw"><input type="checkbox" id="destGrass" data-k><span></span></label><span>Graspiste</span><select id="destGrassLen" data-k style="width:auto"><option value="g5">0–5 cm</option><option value="g10">5–10 cm</option><option value="g25">10–25 cm</option></select></div><div class="swrow"><label class="sw"><input type="checkbox" id="destWet" data-k><span></span></label><span>nass</span></div><div class="swrow"><label class="sw"><input type="checkbox" id="destSoft" data-k><span></span></label><span>weicher Boden</span></div><div class="note" id="destSurch"></div></div>
 <label>Neigung (% + bergauf)<input id="destSlope" data-k inputmode="decimal" value="0"></label>
 <label>Temperatur<select id="destTempMode" data-k><option value="tx" selected>TAF Maximum (TX), sonst METAR</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="destTempMan" data-k inputmode="decimal"></label>
@@ -100,9 +102,10 @@
 <label style="margin-top:6px">TAF<textarea id="altnTaf" data-k rows="3" placeholder="TAF …"></textarea></label>
 <div class="g" style="margin-top:8px">
 <label>Platzhöhe (ft)<input id="altnElev" data-k inputmode="decimal"></label>
+<label>Piste laut AIP<select id="altnRwyAip"><option value="">– manuell –</option></select></label>
 <label>Piste (z.B. 26 oder 263°)<input id="altnRwy" data-k inputmode="decimal"></label>
 <label>LDA (m)<input id="altnLen" data-k inputmode="decimal"></label>
-<label>Belag<select id="altnSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
+<div class="surf" style="grid-column:1/-1"><div class="swrow"><label class="sw"><input type="checkbox" id="altnGrass" data-k><span></span></label><span>Graspiste</span><select id="altnGrassLen" data-k style="width:auto"><option value="g5">0–5 cm</option><option value="g10">5–10 cm</option><option value="g25">10–25 cm</option></select></div><div class="swrow"><label class="sw"><input type="checkbox" id="altnWet" data-k><span></span></label><span>nass</span></div><div class="swrow"><label class="sw"><input type="checkbox" id="altnSoft" data-k><span></span></label><span>weicher Boden</span></div><div class="note" id="altnSurch"></div></div>
 <label>Neigung (% + bergauf)<input id="altnSlope" data-k inputmode="decimal" value="0"></label>
 <label>Temperatur<select id="altnTempMode" data-k><option value="tx" selected>TAF Maximum (TX), sonst METAR</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="altnTempMan" data-k inputmode="decimal"></label>
