@@ -79,3 +79,11 @@ table.fuel input{width:100%;min-width:70px}table.fuel td{vertical-align:middle}t
 .swrow{display:flex;align-items:center;gap:8px;font-size:14px}.swrow .sw{width:46px;height:26px}.swrow .sw span::before{width:20px;height:20px}.swrow .sw input:checked+span::before{transform:translateX(20px)}
 .surf .note{flex-basis:100%;margin:0}
 .ints td.ok{color:var(--good);font-weight:700}.ints td.no{color:var(--red);font-weight:700}
+
+#profile{overflow-x:auto;-webkit-overflow-scrolling:touch}svg.profile{width:100%;min-width:660px;display:block;touch-action:pan-x;font-family:inherit}.profile .phandle{touch-action:none}
+.profile .pg{stroke:#e0e2da;stroke-width:1}.profile .pt{font-size:9px;fill:var(--mut)}.profile .pl{font-size:9px;fill:var(--olive);font-weight:700}
+.profile .pline{fill:none;stroke:var(--red);stroke-width:2.5;stroke-linejoin:round}.profile .phold{fill:none;stroke:var(--red);stroke-width:1.5}
+.profile .pm{stroke:#9aa08f;stroke-width:1;stroke-dasharray:3 3}.profile .pdot{fill:var(--dark)}.profile .pmt{font-size:10px;font-weight:700;fill:var(--dark)}
+.profile .phandle{cursor:ns-resize}.profile .phandle circle{fill:#fff;stroke:var(--red);stroke-width:2}.profile .phandle text{font-size:12px;fill:var(--red);font-weight:700;pointer-events:none}
+.profile .palt{font-size:10px;font-weight:700;fill:var(--red)}.profile .pdist{font-size:9.5px;fill:var(--olive);cursor:pointer;text-decoration:underline}
+.profile .pbh{font-size:9.5px;font-weight:700;fill:var(--dark)}.profile .pb{font-size:9.5px;fill:var(--ink)}

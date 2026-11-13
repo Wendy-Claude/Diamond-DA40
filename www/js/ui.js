@@ -296,6 +296,7 @@ function render(){
    ${fr("Fuel on board","max. 39 USG verfügbar",F.fob)}
    ${fr("Extra fuel","FOB – Minimum",F.extra,F.extra<0?"bad":"")}
    </tbody></table><div class="kv"><span>ETA DEST</span><b>${hhmm(r.etaDest)}</b>${r.withAlt?`<span>ETA ALTN</span><b>${hhmm(r.etaAltn)}</b>`:""}<span>Nach Landung DEST</span><b>${f1(F.afterLanding)} USG</b><span>Endurance (6,6 USG/h)</span><b>${F.endurance!=null?Math.floor(F.endurance/60)+" h "+String(Math.round(F.endurance%60)).padStart(2,"0")+" min":"—"}</b></div>`;
+  $("profile").innerHTML=profileSvg(r);
   // W&B
   const W=r.wb; { const m=num("emptyM"),mo=num("emptyMom"); $("emptyArm").value=m&&mo?(mo/m).toFixed(3).replace(".",","):"–"; }
   $("wbOut").innerHTML=`<table class="t"><thead><tr><th></th><th class="n">Masse kg</th><th class="n">Arm m</th><th class="n">Moment mkg</th><th class="n">max kg</th></tr></thead><tbody>
@@ -486,4 +487,4 @@ function initAirports(){
   $("apSave").onclick=()=>{ const {out,bad}=apParse($("apText").value); try{ localStorage.setItem(AP_KEY,JSON.stringify(out)); }catch(e){} $("apMsg").textContent=Object.keys(out).length+" Plätze gespeichert"+(bad.length?" · nicht gelesen: "+bad.join(" | "):"."); ["dep","dest","altn"].forEach(a=>$(a).dispatchEvent(new Event("input"))); };
   $("apClear").onclick=()=>{ try{ localStorage.removeItem(AP_KEY); }catch(e){} $("apText").value=""; $("apMsg").textContent="Eigene Daten gelöscht."; ["dep","dest","altn"].forEach(a=>$(a).dispatchEvent(new Event("input"))); };
 }
-initFlights(); initAirports(); initWxImport();
+initFlights(); initAirports(); initWxImport(); initProfileUi();

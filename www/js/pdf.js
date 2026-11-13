@@ -118,6 +118,7 @@ function pdfPages(r){
     T.push(["Fuel on board","max. 39 USG","","",f1(F.fob),kg(F.fob||0)]);
     const ex=["Extra fuel","FOB – Minimum","","",f1(F.extra),kg(F.extra||0)]; ex._st={bold:true,color:F.extra<0?C.bad:C.good}; T.push(ex);
     pg.table([30,50,11,11,13,13],T,{head:true,align:["","","r","r","r","r"],sz:6.1});
+    if(pg.H-14-pg.y>34){ pg.h("Vertikalprofil (nicht maßstäblich)"); profilePdf(pg,r,Math.min(22,pg.H-14-pg.y-18)); r._profDone=true; }
     pg.para(`Dichte ${f1(r.density,3)} kg/l (${f1(r.kgPerUsg,3)} kg/USG) bei OAT Start. Restmenge nach Landung DEST ${f1(F.afterLanding)} USG · Endurance (6,6 USG/h) ${F.endurance!=null?Math.floor(F.endurance/60)+":"+String(Math.round(F.endurance%60)).padStart(2,"0")+" h":"—"}.`,5.8);
   });
   // Seite 2: Wetter
@@ -129,6 +130,7 @@ function pdfPages(r){
       if(o.rel&&o.rel.length) pg.mono("ETA ±1 h: "+o.rel.map(g=>g.type==="BASE"?"Basis "+g.text:g.text).join(" | "),5.6,true);
       pg.table([18,40,24,40],[["OAT",o.temp!=null?f1(o.temp)+" °C ("+(o.tsrc||"")+")":"—","QNH / PA",f0(o.qnh)+" hPa / "+(o.pa!=null?f0(o.pa)+" ft":"—")],["Wind",fmtWind(o.wind)+(o.wsrc?" ("+o.wsrc+")":""),rwy(o),o.comp?(o.comp.head>=0?"HW ":"TW ")+f0(Math.abs(o.comp.head))+" kt / XW "+f0(o.comp.cross)+" kt":"—"]],{sz:5.9});
     }
+    if(!r._profDone&&pg.H-14-pg.y>40){ pg.h("Vertikalprofil (nicht maßstäblich)"); profilePdf(pg,r,24); r._profDone=true; }
     pg.para("Temperatur: Maximum aus dem TAF (TX), sonst aktueller METAR-Wert. Wind und QNH aus dem METAR. Gelb: TAF-Gruppen im Zeitraum ETA ± 1 h (FBH-B 5.2.2 / 5.2.3.1).",5.7);
   });
   // Seite 3: Weight & Balance
