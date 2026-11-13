@@ -35,12 +35,13 @@ const addMin=(d,m)=>d?new Date(+d+m*60000):null;
 const hhmm=d=>d?String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()).padStart(2,"0")+" UTC":"—";
 
 /* ---------- Hauptberechnung ---------- */
-function compute(){
+function compute(guess){
+  guess=guess||{d:60,a:30,n:0};
   const r={warn:[]};
   const withAlt=val("withAlt"); r.withAlt=withAlt;
   const ifr=val("rules")==="IFR"; r.ifr=ifr;
   r.etd=etdDate();
-  const eetD=num("eetDest")||0, appr=num("apprMin")||0, eetA=num("eetAltn")||0;
+  const eetD=guess.d, appr=num("apprMin")||0, eetA=guess.a;
   r.etaDest=addMin(r.etd,eetD+appr);
   r.etaAltn=withAlt?addMin(r.etaDest,eetA+appr):null;
   const timeOf={dep:r.etd,dest:r.etaDest,altn:r.etaAltn};
@@ -85,6 +86,7 @@ function compute(){
     let w=null; o.wsrc="";
     if(wm){ const m=/^(\d{3})\/?(\d{1,3})$/.exec(wm.replace("KT","")); if(m){ w={dir:+m[1],spd:+m[2]}; o.wsrc="manuell"; } }
     const rwy=num(a+"Rwy"); o.rwy=rwy!=null?(rwy<=36?rwy*10:rwy):null;
+    if(!w&&o.metar&&o.metar.wind){ w=o.metar.wind; o.wsrc="METAR"; }
     if(!w&&o.t){
       const cands=tafWindCands(o.taf,o.t);
       if(cands.length){
@@ -94,7 +96,6 @@ function compute(){
         o.wsrc="TAF "+w.src+(cands.length>1?", ungünstigster Wert":"");
       }
     }
-    if(!w&&o.metar&&o.metar.wind){ w=o.metar.wind; o.wsrc="METAR"; }
     o.wind=w;
     o.surf=val(a+"Surf"); o.slope=num(a+"Slope")||0; o.len=num(a+"Len");
     o.comp=null;
@@ -110,29 +111,52 @@ function compute(){
     r.ap[a]=o;
   }
 
-  /* Treibstoff FBH-B 5.3 */
+  /* Dichte und Masse-Schaetzung fuer Steigflug (TOM = ZFM + FOB - Taxi) */
+  const dens=densLoad(); const kU=kgPerUsg(r.ap.dep&&r.ap.dep.temp,dens); r.kgPerUsg=kU; r.density=fuelDensity(r.ap.dep&&r.ap.dep.temp,dens);
+  const loadKg=(num("emptyM")||0)+(num("seatL")||0)+(num("seatR")||0)+(num("rearL")||0)+(num("rearR")||0)+(num("bagF")||0)+(num("bagA")||0);
+
+  /* Treibstoff FBH-B 5.3 mit Steigflug (AFM 5.3.10) und Reiseflug (AFM 5.3.11) */
   const F={}; r.fuel=F;
   F.method=val("fuelMethod"); const cp=+val("cruisePwr");
+  F.pwr = F.method==="rule"?75:cp;
   F.ffCruise = F.method==="rule"?6.6:FBH.ff[cp];
-  F.ffClimb = FBH.ff[92];
-  const climbMin = F.method==="rule"?0:Math.min(num("climbMin")||0,eetD);
-  F.taxi=1;
-  F.tripEnroute = climbMin/60*F.ffClimb + (eetD-climbMin)/60*F.ffCruise;
+  F.taxi=1; F.final=3;
+  F.fob=num("fob");
+  const tomEst=loadKg+(F.fob||0)*kU-F.taxi*kU;
+  const parseAlt=s=>{ s=String(s||"").trim().toUpperCase().replace(/\s+/g,""); if(!s) return null; let m=/^FL(\d{2,3})$/.exec(s); if(m) return +m[1]*100; m=/^(\d+)(FT)?$/.exec(s); if(!m) return null; const v=+m[1]; return v<400?v*100:v; };
+  const leg=(prefix,ap,mass,tag)=>{
+    const o={dist:num("dist"+prefix),alt:parseAlt(val("alt"+prefix)),tasIn:num("tas"+prefix),ok:false};
+    if(!o.dist||o.alt==null||!ap||ap.pa==null||ap.temp==null||!(mass>0)){ o.note="Strecke, Reiseflughöhe, Platzhöhe und Temperatur eingeben"; return o; }
+    const cl=climbToAlt(mass,ap.pa,ap.temp,o.alt); if(!cl.ok){ o.note=cl.note; return o; }
+    o.cl=cl; o.dev=cl.dev;
+    const cruiseOat=isaTemp(o.alt)+(ap.temp-isaTemp(ap.pa));
+    o.tas=o.tasIn||cruiseTas(o.alt,cruiseOat,F.pwr); o.tasSrc=o.tasIn?"manuell":"AFM 5.3.11";
+    if(!o.tas){ o.note="TAS aus AFM nicht ermittelbar (Leistung 45–92 %) – TAS manuell eingeben"; return o; }
+    o.remNm=Math.max(0,o.dist-cl.nm); if(o.dist<cl.nm) r.warn.push(`${tag}: Strecke ${f0(o.dist)} NM kürzer als der Steigflug (${f0(cl.nm)} NM).`);
+    o.crMin=o.remNm/o.tas*60; o.crUsg=o.crMin/60*F.ffCruise; o.min=cl.min+o.crMin; o.usg=cl.usg+o.crUsg; o.ok=true;
+    return o;
+  };
+  F.tripLeg=leg("Trip",r.ap.dep,tomEst,"Trip");
+  F.tripEnroute=F.tripLeg.ok?F.tripLeg.usg:0;
   F.tripAppr = ifr?2:0;
   F.trip = F.tripEnroute+F.tripAppr;
   F.cont = 0.10*F.trip;
-  F.final = 3;
+  r.eetDest = F.tripLeg.ok?F.tripLeg.min:0;
+  const lmEst=tomEst-F.trip*kU;
   if(withAlt){
+    F.altLeg=leg("Alt",r.ap.dest,lmEst,"Alternate");
     F.holdMin = ifr?(+val("holdMin")):0;
     F.holdPwr = +val("holdPwr");
-    F.altEnroute = eetA/60*F.ffCruise;
+    F.altEnroute = F.altLeg.ok?F.altLeg.usg:0;
     F.altAppr = ifr?2:0;
     F.altHold = F.holdMin/60*FBH.ff[F.holdPwr];
     F.alt = F.altEnroute+F.altAppr+F.altHold;
     F.add = 0;
-  } else { F.alt=0; F.altEnroute=0; F.altAppr=0; F.altHold=0; F.add=5; }
+    r.eetAltn = F.altLeg.ok?F.altLeg.min:0;
+  } else { F.alt=0; F.altEnroute=0; F.altAppr=0; F.altHold=0; F.add=5; r.eetAltn=0; }
+  if(!F.tripLeg.ok) r.warn.push("Trip fuel: "+F.tripLeg.note+".");
+  if(withAlt&&F.altLeg&&!F.altLeg.ok) r.warn.push("Alternate fuel: "+F.altLeg.note+".");
   F.req = F.taxi+F.trip+F.cont+F.alt+F.add+F.final;
-  F.fob = num("fob");
   F.extra = F.fob!=null?F.fob-F.req:null;
   F.afterLanding = F.fob!=null?F.fob-F.taxi-F.trip:null;
   F.endurance = F.fob!=null?(F.fob-F.taxi)/6.6*60:null;
@@ -141,7 +165,7 @@ function compute(){
   if(F.method==="rule"&&F.afterLanding!=null&&F.afterLanding<10) r.warn.push(`Faustformel 6,6 USG/h nur zulässig, wenn nach der Landung noch 10 USG vorhanden sind (vorhanden: ${f1(F.afterLanding)} USG) – genaue Berechnung nach FHB-Tabellen erforderlich (FBH-B 5.3).`);
 
   /* Weight & Balance FBH-B 6.1 */
-  const W={}; r.wb=W; const A=FBH.arm; const dens=densLoad(); const k=kgPerUsg(r.ap.dep&&r.ap.dep.temp,dens); r.kgPerUsg=k; r.density=fuelDensity(r.ap.dep&&r.ap.dep.temp,dens);
+  const W={}; r.wb=W; const A=FBH.arm; const k=kU;
   const eM=num("emptyM")||0, eMo=num("emptyMom")||0;
   const front=(num("seatL")||0)+(num("seatR")||0), rear=(num("rearL")||0)+(num("rearR")||0), bf=num("bagF")||0, ba=num("bagA")||0;
   W.rows=[["Empty mass",eM,eM?eMo/eM:null,eMo],["Front seats",front,A.front,front*A.front],["Rear seats",rear,A.rear,rear*A.rear],["FWD Baggage",bf,A.fwdBag,bf*A.fwdBag],["AFT Baggage",ba,A.aftBag,ba*A.aftBag]];
@@ -196,7 +220,7 @@ function compute(){
     const gs=tas+tail; // ungünstigste Variante: kein Gegenwind angerechnet
     const g=roc*0.98/gs;
     const rocReq=req*gs/0.98;
-    return {label,ias,roc,tas,gs,tail,grad:g,req,rocReq,ok:g>=req,note:c.note};
+    return {label,ias,roc,tas,gs,tail,grad:g,ftnm:g*60.7612,req,rocReq,ok:g>=req,note:c.note};
   };
   const rd=num("reqGradDep")||3.3, rg=num("reqGradGA")||2.5;
   P.climbDep=[grad(AFM_DATA.climbCR,88,W.tom.m,dep,40,"Cruise Climb (flaps UP, 88 KIAS, 92 %)",rd),grad(AFM_DATA.climbTO,72,W.tom.m,dep,20,"Take-off Climb (flaps T/O, 72 KIAS, 92 %)",rd)].filter(Boolean);
@@ -204,6 +228,8 @@ function compute(){
   if(P.climbDep.length&&P.climbDep.every(x=>x.grad!=null&&!x.ok)) r.warn.push(`Abflug ${dep.icao}: geforderter Steiggradient ${f1(rd)} % wird nicht erreicht.`);
   else if(P.climbDep[0]&&P.climbDep[0].grad!=null&&!P.climbDep[0].ok) r.warn.push(`Abflug ${dep.icao}: Cruise Climb erreicht ${f1(rd)} % nicht – Take-off Climb anwenden (FBH-B 4.3 / LB 2113 Kap. 1.5).`);
   if(P.climbGA[0]&&P.climbGA[0].grad!=null&&!P.climbGA[0].ok) r.warn.push(`Durchstarten ${dst.icao}: geforderter Steiggradient ${f1(rg)} % wird nicht erreicht.`);
+  r.appr=appr; r.tripMin=r.eetDest; r.guess=guess;
+  if(!guess.n&&(Math.abs(r.eetDest-guess.d)>1||Math.abs(r.eetAltn-guess.a)>1)) return compute({d:r.eetDest,a:r.eetAltn,n:1});
   return r;
 }
 
@@ -230,18 +256,29 @@ function render(){
       <div class="raw">${tafHtml(o)}</div>`;
   }
   // Treibstoff
-  const F=r.fuel;
+  const F=r.fuel; const setT=(id,v)=>{ const e=$(id); if(e) e.textContent=v; };
+  const legOut=(p,L,ap)=>{
+    const ok=L&&L.ok;
+    setT(p+"ClInfo",ok?`${f0(ap.pa)} → ${f0(L.alt)} ft${L.dev>0?" · ISA+"+f0(L.dev):""}`:(L&&L.note)||"");
+    setT(p+"ClMin",ok?f0(L.cl.min):""); setT(p+"ClNm",ok?f0(L.cl.nm):""); setT(p+"ClF",ok?f1(L.cl.usg):"");
+    setT(p+"CrInfo",ok?`TAS ${f0(L.tas)} kt (${L.tasSrc}) · ${f1(F.ffCruise)} USG/h`:"");
+    setT(p+"CrMin",ok?f0(L.crMin):""); setT(p+"CrNm",ok?f0(L.remNm):""); setT(p+"CrF",ok?f1(L.crUsg):"");
+    setT(p+"TotMin",ok?f0(L.min):""); setT(p+"TotNm",ok?f0(L.dist):"");
+  };
+  legOut("t",F.tripLeg,r.ap.dep); setT("tAp",f1(F.tripAppr)); setT("tApInfo",r.ifr?"IFR: 2 USG":"VFR"); setT("tCont",f1(F.cont)); setT("tTotF",f1(F.trip+0));
+  if(r.withAlt){ legOut("a",F.altLeg,r.ap.dest); setT("aAp",f1(F.altAppr)); setT("aApInfo",r.ifr?"IFR: 2 USG":"VFR");
+    setT("aHoldInfo",r.ifr?`${F.holdMin} min @ ${F.holdPwr} % (${f1(FBH.ff[F.holdPwr])} USG/h)`:"entfällt (VFR)"); setT("aHoldMin",r.ifr?f0(F.holdMin):""); setT("aHoldF",f1(F.altHold)); setT("aTotF",f1(F.alt)); }
   const fr=(l,d,v,cls="")=>`<tr class="${cls}"><td>${l}</td><td>${d}</td><td class="n">${f1(v)}</td></tr>`;
-  $("fuelOut").innerHTML=`<table class="t"><thead><tr><th>Position</th><th>Grundlage FBH-B 5.3</th><th class="n">USG</th></tr></thead><tbody>
+  $("fuelOut").innerHTML=`<table class="t"><thead><tr><th>Position</th><th>Grundlage</th><th class="n">USG</th></tr></thead><tbody>
    ${fr("Taxi fuel","1 USG",F.taxi)}
-   ${fr("Trip fuel",(r.ifr?"Start bis IAF ":"Start bis Landung ")+f0(num("eetDest"))+" min · "+(F.method==="rule"?"Faustformel 6,6 USG/h":"FHB 4.4: "+val("cruisePwr")+" % = "+f1(F.ffCruise)+" USG/h"+(num("climbMin")?", Steigflug "+f0(num("climbMin"))+" min @ 92 %":""))+(r.ifr?" + 2 USG Anflug":""),F.trip)}
+   ${fr("Trip fuel","inkl. Steigflug und Anflug",F.trip)}
    ${fr("Contingency fuel","10 % vom Trip fuel",F.cont)}
-   ${r.withAlt?fr("Alternate fuel","wie Trip fuel ("+f0(num("eetAltn"))+" min"+(r.ifr?" + 2 USG Anflug + "+F.holdMin+" min Warteverfahren @ "+F.holdPwr+" %":"")+")",F.alt):fr("Additional fuel","No Alternate Required: 5 USG (= 45 min @ 75 %)",F.add)}
+   ${r.withAlt?fr("Alternate fuel","inkl. Anflug"+(r.ifr?" und Warteverfahren":""),F.alt):fr("Additional fuel","No Alternate Required: 5 USG (= 45 min @ 75 %)",F.add)}
    ${fr("Final reserve fuel","3 USG",F.final)}
    ${fr("<b>Minimum required</b>","",F.req,"sum")}
    ${fr("Fuel on board","max. 39 USG verfügbar",F.fob)}
    ${fr("Extra fuel","FOB – Minimum",F.extra,F.extra<0?"bad":"")}
-   </tbody></table><div class="kv"><span>Nach Landung DEST</span><b>${f1(F.afterLanding)} USG</b><span>Endurance (6,6 USG/h)</span><b>${F.endurance!=null?Math.floor(F.endurance/60)+" h "+String(Math.round(F.endurance%60)).padStart(2,"0")+" min":"—"}</b></div>`;
+   </tbody></table><div class="kv"><span>ETA DEST</span><b>${hhmm(r.etaDest)}</b>${r.withAlt?`<span>ETA ALTN</span><b>${hhmm(r.etaAltn)}</b>`:""}<span>Nach Landung DEST</span><b>${f1(F.afterLanding)} USG</b><span>Endurance (6,6 USG/h)</span><b>${F.endurance!=null?Math.floor(F.endurance/60)+" h "+String(Math.round(F.endurance%60)).padStart(2,"0")+" min":"—"}</b></div>`;
   // W&B
   const W=r.wb; { const m=num("emptyM"),mo=num("emptyMom"); $("emptyArm").value=m&&mo?(mo/m).toFixed(3).replace(".",","):"–"; }
   $("wbOut").innerHTML=`<table class="t"><thead><tr><th></th><th class="n">Masse kg</th><th class="n">Arm m</th><th class="n">Moment mkg</th><th class="n">max kg</th></tr></thead><tbody>
@@ -254,7 +291,7 @@ function render(){
   const P=r.perf;
   const dRow=(lab,d)=>!d?`<tr><td>${lab}</td><td colspan="2" class="muted">Daten fehlen</td></tr>`:!d.ok?`<tr class="bad"><td>${lab}</td><td colspan="2">${esc(d.note)}</td></tr>`:`<tr><td>${lab}</td><td class="n">${f0(d.roll)}</td><td class="n">${f0(d.d50)}</td></tr>`;
   const steps=d=>d&&d.ok?`<div class="note">${d.steps.map(s=>esc(s[0])+": "+f0(s[1])+" / "+f0(s[2])+" m").join(" → ")}${d.note?" · "+esc(d.note):""}</div>`:"";
-  const gRow=g=>g.grad==null?`<tr><td>${esc(g.label)}</td><td colspan="4">${esc(g.note)}</td></tr>`:`<tr class="${g.ok?"good":"bad"}"><td>${esc(g.label)}</td><td class="n">${f0(g.roc)}</td><td class="n">${f0(g.gs)}</td><td class="n">${f1(g.grad)} %</td><td class="n">${f1(g.req)} % / ${f0(g.rocReq)} ft/min</td></tr>`;
+  const gRow=g=>g.grad==null?`<tr><td>${esc(g.label)}</td><td colspan="4">${esc(g.note)}</td></tr>`:`<tr class="${g.ok?"good":"bad"}"><td>${esc(g.label)}</td><td class="n">${f0(g.roc)}</td><td class="n">${f0(g.gs)}</td><td class="n">${f1(g.grad)} %<br><small>${f0(g.ftnm)} ft/NM</small></td><td class="n">${f1(g.req)} % / ${f0(g.rocReq)} ft/min</td></tr>`;
   $("perfOut").innerHTML=`<div class="kv"><span>V<sub>R</sub> (TOM ${f0(W.tom.m)} kg)</span><b>${P.vrTo.vr??"—"} KIAS</b><span>V<sub>APP</sub> DEST (LM ${f0(W.lmDest.m)} kg)</span><b>${P.vappDest.vapp??"—"} KIAS</b>${P.vappAltn?`<span>V<sub>APP</sub> ALTN (LM ${f0(W.lmAltn.m)} kg)</span><b>${P.vappAltn.vapp??"—"} KIAS</b>`:""}</div>
    <table class="t"><thead><tr><th>Strecke (AFM 5.3.7 / 5.3.12)</th><th class="n">Rollstrecke m</th><th class="n">über 15 m/50 ft m</th></tr></thead><tbody>
    ${dRow("Start "+(r.ap.dep.icao||"DEP"),P.to)}${dRow("Landung "+(r.ap.dest.icao||"DEST"),P.ldDest)}${r.withAlt?dRow("Landung "+(r.ap.altn.icao||"ALTN"),P.ldAltn):""}
@@ -306,10 +343,7 @@ async function fetchWx(a){
 function wxLink(a){ const icao=(val(a)||"").toUpperCase(); const l=$(a+"Link"); if(l) l.href="https://aviationweather.gov/data/metar/?ids="+icao+"&taf=1&hours=1"; }
 
 /* ---------- Downloads ---------- */
-async function offerFile(name,data){
-  try{ if(window.claude&&window.claude.use){ const d=await window.claude.use("downloads"); if(d){ await d.save({filename:name,data}); return true; } } }catch(e){ if(e&&e.code==="declined") return true; }
-  try{ const blob=data instanceof Blob?data:new Blob([data]); const u=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),5000); return true; }catch(e){ return false; }
-}
+async function offerFile(name,data){ return saveFile(name,data,/\.json$/.test(name)?"application/json":undefined); }
 
 /* ---------- Init ---------- */
 function setEmpty(){ const a=acLoad()[val("reg")]; if(acComplete(a)){ $("emptyM").value=a.mass; $("emptyMom").value=a.moment; } else { $("emptyM").value=""; $("emptyMom").value=""; } }
@@ -318,7 +352,6 @@ document.addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.k!
 APS.forEach(a=>{ $(a+"Btn").onclick=()=>fetchWx(a); });
 $("btnBooklet").onclick=()=>makePdf("booklet");
 $("btnA5").onclick=()=>makePdf("a5");
-$("btnReset").onclick=()=>{ try{localStorage.removeItem("d40fpp");}catch(e){} location.reload(); };
 buildReg();
 if(!load()){ $("dof").value=new Date().toISOString().slice(0,10); }
 if(!acComplete(acLoad()[$("reg").value])){ const f=Object.keys(AC_DEFAULTS).find(k=>acComplete(acLoad()[k])); if(f) $("reg").value=f; }
@@ -365,3 +398,42 @@ function initAcMenu(){
   $("acExport").onclick=()=>offerFile("D40_Flugzeugdaten.json",JSON.stringify(acLoad(),null,2));
   $("acImport").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); const o={}; for(const k of Object.keys(AC_DEFAULTS)) if(j[k]) o[k]=Object.assign({},AC_DEFAULTS[k],j[k]); acSave(o); draw(acLoad()); buildReg(); setEmpty(); render(); msg.style.color=""; msg.textContent="Importiert – bitte prüfen und speichern."; }catch(err){ msg.style.color="#c8102e"; msg.textContent="Datei ungültig."; } e.target.value=""; };
 }
+
+/* ---------- Formular zuruecksetzen, Fluege speichern, Flugplatzdaten ---------- */
+function resetForm(){
+  if(!confirm("Formular neu eingeben? Alle Eingaben und Werte werden geleert (gespeicherte Flüge und Flugzeugdaten bleiben erhalten).")) return;
+  FIELDS().forEach(e=>{ if(e.tagName==="SELECT"){ let d=[...e.options].findIndex(o=>o.defaultSelected); e.selectedIndex=d<0?0:d; } else if(e.type==="checkbox") e.checked=e.defaultChecked; else e.value=""; });
+  $("reg").selectedIndex=0; buildReg(); const f=Object.keys(AC_DEFAULTS).find(k=>acComplete(acLoad()[k])); if(f) $("reg").value=f;
+  $("dof").value=new Date().toISOString().slice(0,10); $("etd").value="0900"; $("apprMin").value="15"; $("varE").value="4.5";
+  $("reqGradDep").value="3.3"; $("reqGradGA").value="2.5"; $("fob").value="39";
+  ["dep","dest","altn"].forEach(a=>{ const e=$(a+"Elev"); delete e.dataset.auto; const n=$(a+"ElevNote"); if(n) n.textContent=""; $(a+"Wx").textContent=""; });
+  setEmpty(); wxLink("dep"); wxLink("dest"); wxLink("altn"); render(); window.scrollTo(0,0);
+}
+const FL_KEY="d40flights.v1";
+const flRead=()=>{ try{ return JSON.parse(localStorage.getItem(FL_KEY)||"[]"); }catch(e){ return []; } };
+function flDraw(sel){ const l=flRead(); $("flList").innerHTML=l.length?l.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} (${esc(x.saved.slice(0,16).replace("T"," "))})</option>`).join(""):'<option value="">– keine –</option>'; if(sel) $("flList").value=sel; }
+function initFlights(){
+  flDraw();
+  $("flSave").onclick=()=>{ const name=($("flName").value||[val("cs"),val("dep")&&val("dest")?val("dep").toUpperCase()+"–"+val("dest").toUpperCase():"",val("dof")].filter(Boolean).join(" ")||"Flug").trim();
+    const o={}; FIELDS().forEach(e=>o[e.id]=e.type==="checkbox"?e.checked:e.value); const l=flRead(); const id=String(Date.now());
+    l.unshift({id,name,saved:new Date().toISOString(),fields:o}); try{ localStorage.setItem(FL_KEY,JSON.stringify(l.slice(0,50))); }catch(e){ $("flMsg").textContent="Speichern nicht möglich."; return; }
+    flDraw(id); $("flMsg").textContent="Gespeichert: "+name; };
+  $("flLoad").onclick=()=>{ const x=flRead().find(f=>f.id===$("flList").value); if(!x){ $("flMsg").textContent="Kein Flug ausgewählt."; return; }
+    FIELDS().forEach(e=>{ if(e.id in x.fields){ if(e.type==="checkbox") e.checked=x.fields[e.id]; else e.value=x.fields[e.id]; } });
+    setEmpty(); ["dep","dest","altn"].forEach(wxLink); render(); $("flMsg").textContent="Geladen: "+x.name; window.scrollTo(0,0); };
+  $("flDel").onclick=()=>{ const id=$("flList").value; if(!id||!confirm("Diesen gespeicherten Flug löschen?")) return; try{ localStorage.setItem(FL_KEY,JSON.stringify(flRead().filter(f=>f.id!==id))); }catch(e){} flDraw(); $("flMsg").textContent="Gelöscht."; };
+  $("btnNewTop").onclick=resetForm; $("btnNewBottom").onclick=resetForm;
+}
+function initAirports(){
+  const apply=a=>{ const e=$(a+"Elev"), n=$(a+"ElevNote"); const hit=apLookup(val(a));
+    if(hit){ if(!e.value||e.dataset.auto==="1"){ e.value=hit.elev; e.dataset.auto="1"; } n.textContent=e.dataset.auto==="1"?`${hit.name}: ${hit.elev} ft – ${hit.src}`:""; }
+    else { if(e.dataset.auto==="1"){ e.value=""; delete e.dataset.auto; } n.textContent=(val(a)||"").length===4?"Platz nicht in der Datenbank – Höhe manuell eingeben.":""; } };
+  ["dep","dest","altn"].forEach(a=>{ const e=$(a+"Elev"); const n=document.createElement("div"); n.className="note"; n.id=a+"ElevNote"; e.parentElement.appendChild(n);
+    e.addEventListener("input",()=>{ delete e.dataset.auto; n.textContent=""; }); $(a).addEventListener("input",()=>{ apply(a); render(); }); apply(a); });
+  const dlg=$("apDlg");
+  $("btnAp").onclick=()=>{ const u=apUser(); $("apText").value=Object.keys(u).map(k=>k+";"+u[k][0]+";"+u[k][1]).join("\n"); $("apMsg").textContent=""; dlg.showModal(); };
+  $("apClose").onclick=()=>dlg.close();
+  $("apSave").onclick=()=>{ const {out,bad}=apParse($("apText").value); try{ localStorage.setItem(AP_KEY,JSON.stringify(out)); }catch(e){} $("apMsg").textContent=Object.keys(out).length+" Plätze gespeichert"+(bad.length?" · nicht gelesen: "+bad.join(" | "):"."); ["dep","dest","altn"].forEach(a=>$(a).dispatchEvent(new Event("input"))); };
+  $("apClear").onclick=()=>{ try{ localStorage.removeItem(AP_KEY); }catch(e){} $("apText").value=""; $("apMsg").textContent="Eigene Daten gelöscht."; ["dep","dest","altn"].forEach(a=>$(a).dispatchEvent(new Event("input"))); };
+}
+initFlights(); initAirports();

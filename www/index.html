@@ -18,6 +18,16 @@
   <div class="sub">Grundlage FBH-B D40 (Stand 01 09 26) · METAR/TAF aviationweather.gov</div>
 </header>
 <main>
+<div class="row topbtn"><button type="button" class="btn r" id="btnNewTop">Formular neu eingeben</button></div>
+<section>
+  <h2>Flug speichern / laden</h2>
+  <div class="g">
+    <label>Name des Fluges<input id="flName" placeholder="z. B. LOWL – LOWS 13.11."></label>
+    <label>Gespeicherte Flüge<select id="flList"></select></label>
+  </div>
+  <div class="row" style="margin-top:8px"><button type="button" class="btn s" id="flSave">Aktuellen Flug speichern</button><button type="button" class="btn s o" id="flLoad">Laden</button><button type="button" class="btn s o" id="flDel">Löschen</button></div>
+  <div class="note" id="flMsg"></div>
+</section>
 
 <section>
   <h2>Flugdaten</h2>
@@ -30,9 +40,7 @@
     <label>Zielflugplatz (ICAO)<input id="dest" data-k maxlength="4" placeholder="LOWS" style="text-transform:uppercase"></label>
     <label class="altonly">Alternate (ICAO)<input id="altn" data-k maxlength="4" placeholder="LOWW" style="text-transform:uppercase"></label>
     <label>ETD (UTC, hhmm)<input id="etd" data-k inputmode="numeric" placeholder="0900" value="0900"></label>
-    <label>EET DEP → IAF DEST (min)<input id="eetDest" data-k inputmode="decimal" value="45"></label>
-    <label>Anflug IAF → Landung (min)<input id="apprMin" data-k inputmode="decimal" value="15"></label>
-    <label class="altonly">EET DEST → IAF ALTN (min)<input id="eetAltn" data-k inputmode="decimal" value="30"></label>
+    <label>Anflug IAF → Landung (min, für ETA)<input id="apprMin" data-k inputmode="decimal" value="15"></label>
   </div>
   <div class="row" style="margin-top:8px"><button type="button" class="btn s o" id="btnAc">Flugzeuge / Leermassen bearbeiten</button></div>
   <div class="note" id="etaOut"></div>
@@ -69,7 +77,7 @@
 <label>TORA (m)<input id="depLen" data-k inputmode="decimal"></label>
 <label>Belag<select id="depSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
 <label>Neigung (% + bergauf)<input id="depSlope" data-k inputmode="decimal" value="0"></label>
-<label>Temperatur<select id="depTempMode" data-k><option value="auto" selected>Automatisch (METAR ±90 min, sonst TAF TX/TN)</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>Temperatur<select id="depTempMode" data-k><option value="tx" selected>TAF Maximum (TX), sonst METAR</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="depTempMan" data-k inputmode="decimal"></label>
 <label>Wind manuell (ddd/ff)<input id="depWindMan" data-k placeholder="leer = TAF"></label>
 <label>QNH manuell (hPa)<input id="depQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
@@ -83,7 +91,7 @@
 <label>LDA (m)<input id="destLen" data-k inputmode="decimal"></label>
 <label>Belag<select id="destSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
 <label>Neigung (% + bergauf)<input id="destSlope" data-k inputmode="decimal" value="0"></label>
-<label>Temperatur<select id="destTempMode" data-k><option value="auto" selected>Automatisch (METAR ±90 min, sonst TAF TX/TN)</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>Temperatur<select id="destTempMode" data-k><option value="tx" selected>TAF Maximum (TX), sonst METAR</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="destTempMan" data-k inputmode="decimal"></label>
 <label>Wind manuell (ddd/ff)<input id="destWindMan" data-k placeholder="leer = TAF"></label>
 <label>QNH manuell (hPa)<input id="destQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
@@ -97,29 +105,51 @@
 <label>LDA (m)<input id="altnLen" data-k inputmode="decimal"></label>
 <label>Belag<select id="altnSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
 <label>Neigung (% + bergauf)<input id="altnSlope" data-k inputmode="decimal" value="0"></label>
-<label>Temperatur<select id="altnTempMode" data-k><option value="auto" selected>Automatisch (METAR ±90 min, sonst TAF TX/TN)</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>Temperatur<select id="altnTempMode" data-k><option value="tx" selected>TAF Maximum (TX), sonst METAR</option><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
 <label>OAT manuell (°C)<input id="altnTempMan" data-k inputmode="decimal"></label>
 <label>Wind manuell (ddd/ff)<input id="altnWindMan" data-k placeholder="leer = TAF"></label>
 <label>QNH manuell (hPa)<input id="altnQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
 </div><div id="altnOut"></div></div>
 </section>
 
-<section>
-  <h2>Treibstoff (FBH-B 5.3)</h2>
+<section id="secFuel">
+  <h2>Treibstoff (FBH-B 5.3 · AFM 5.3.10 / 5.3.11)</h2>
   <div class="g">
-    <label>Methode<select id="fuelMethod" data-k><option value="rule">Faustformel 6,6 USG/h</option><option value="power">FHB-Tabelle 4.4</option></select></label>
-    <label>Reiseleistung (%)<select id="cruisePwr" data-k><option>55</option><option>60</option><option>65</option><option>70</option><option selected>75</option><option>80</option><option>85</option><option>90</option></select></label>
-    <label>Steigflug @ 92 % (min)<input id="climbMin" data-k inputmode="decimal" value="0"></label>
+    <label>Methode<select id="fuelMethod" data-k><option value="power" selected>AFM-Tabelle Leistung</option><option value="rule">Faustformel 6,6 USG/h</option></select></label>
+    <label>Reiseleistung (%)<select id="cruisePwr" data-k><option>45</option><option>50</option><option>55</option><option>60</option><option>65</option><option>70</option><option selected>75</option><option>80</option><option>85</option><option>90</option></select></label>
     <label class="altonly">Warteverfahren<select id="holdMin" data-k><option value="30">30 min</option><option value="15">15 min (Radar/VMC)</option></select></label>
     <label class="altonly">Leistung Warteverfahren (%)<select id="holdPwr" data-k><option>45</option><option>50</option><option>55</option><option>60</option><option>65</option><option>70</option><option selected>75</option></select></label>
     <label>Fuel on board (USG)<input id="fob" data-k inputmode="decimal" value="39"></label>
   </div>
+  <h3 class="">TRIP FUEL</h3>
+  <table class="t fuel "><thead><tr><th>Position</th><th>Eingabe</th><th class="n">Zeit min</th><th class="n">Strecke NM</th><th class="n">USG</th></tr></thead><tbody>
+   <tr><td>Gesamtstrecke DEP → IAF DEST</td><td><input id="distTrip" data-k inputmode="decimal" placeholder="NM"></td><td></td><td class="n"></td><td></td></tr>
+   <tr><td>Reiseflughöhe</td><td><input id="altTrip" data-k placeholder="FL070 oder 7000"></td><td></td><td></td><td></td></tr>
+   <tr><td>TAS manuell <small>(optional)</small></td><td><input id="tasTrip" data-k inputmode="decimal" placeholder="kt"></td><td></td><td></td><td></td></tr>
+   <tr><td>Steigflug<br><small>88 KIAS · 92 %</small></td><td id="tClInfo" class="small"></td><td class="n" id="tClMin"></td><td class="n" id="tClNm"></td><td class="n" id="tClF"></td></tr>
+   <tr><td>Reiseflug<br><small>Reststrecke</small></td><td id="tCrInfo" class="small"></td><td class="n" id="tCrMin"></td><td class="n" id="tCrNm"></td><td class="n" id="tCrF"></td></tr>
+   <tr><td>Anflug</td><td id="tApInfo" class="small"></td><td></td><td></td><td class="n" id="tAp"></td></tr>
+   <tr><td>Contingency</td><td class="small">10 % vom Trip fuel</td><td></td><td></td><td class="n" id="tCont"></td></tr>
+   <tr class="sum"><td>TRIP FUEL</td><td></td><td class="n" id="tTotMin"></td><td class="n" id="tTotNm"></td><td class="n" id="tTotF"></td></tr>
+  </tbody></table>
+  <h3 class="altonly">ALTERNATE FUEL</h3>
+  <table class="t fuel altonly"><thead><tr><th>Position</th><th>Eingabe</th><th class="n">Zeit min</th><th class="n">Strecke NM</th><th class="n">USG</th></tr></thead><tbody>
+   <tr><td>Strecke DEST → IAF ALTN</td><td><input id="distAlt" data-k inputmode="decimal" placeholder="NM"></td><td></td><td class="n"></td><td></td></tr>
+   <tr><td>Reiseflughöhe</td><td><input id="altAlt" data-k placeholder="FL070 oder 7000"></td><td></td><td></td><td></td></tr>
+   <tr><td>TAS manuell <small>(optional)</small></td><td><input id="tasAlt" data-k inputmode="decimal" placeholder="kt"></td><td></td><td></td><td></td></tr>
+   <tr><td>Steigflug<br><small>88 KIAS · 92 %</small></td><td id="aClInfo" class="small"></td><td class="n" id="aClMin"></td><td class="n" id="aClNm"></td><td class="n" id="aClF"></td></tr>
+   <tr><td>Reiseflug<br><small>Reststrecke</small></td><td id="aCrInfo" class="small"></td><td class="n" id="aCrMin"></td><td class="n" id="aCrNm"></td><td class="n" id="aCrF"></td></tr>
+   <tr><td>Anflug</td><td id="aApInfo" class="small"></td><td></td><td></td><td class="n" id="aAp"></td></tr>
+   <tr class="altonly"><td>Warteverfahren</td><td id="aHoldInfo" class="small"></td><td class="n" id="aHoldMin"></td><td></td><td class="n" id="aHoldF"></td></tr>
+   <tr class="sum"><td>ALTERNATE FUEL</td><td></td><td class="n" id="aTotMin"></td><td class="n" id="aTotNm"></td><td class="n" id="aTotF"></td></tr>
+  </tbody></table>
+  <h3>Summe</h3>
+  <div id="fuelOut"></div>
   <div class="g" style="margin-top:10px">
     <label>Dichte Jet A-1 bei 15 °C (kg/l)<input id="dens15" inputmode="decimal"></label>
     <label>Dichteänderung je °C (kg/l)<input id="densK" inputmode="decimal"></label>
   </div>
   <div class="note">Die Dichte folgt der Temperatur (OAT am Startplatz) und bestimmt die Treibstoffmasse in kg.</div>
-  <div id="fuelOut"></div>
 </section>
 
 <section>
@@ -167,15 +197,30 @@
 <section>
   <h2>PDF</h2>
   <div class="row">
-    <button class="btn r" id="btnBooklet">Broschüre A5 (A4 beidseitig)</button>
-    <button class="btn o" id="btnA5">A5 Einzelseiten</button>
-        <button class="btn o" id="btnReset">Zurücksetzen</button>
+    <button class="btn r" id="btnBooklet">Vorschau Broschüre (A4)</button>
+    <button class="btn o" id="btnA5">Vorschau A5-Seiten</button>
+    <button class="btn o" id="btnAp">Flugplatzdaten</button>
   </div>
-  <div class="note" id="pdfStatus">Broschüre: auf A4 quer beidseitig drucken, an der kurzen Kante wenden, in der Mitte falten.</div>
+  <div class="note" id="pdfStatus">Die Vorschau öffnet sich in einem Fenster. Von dort speicherst oder teilst du das PDF.</div>
 </section>
+<div class="row topbtn"><button type="button" class="btn r" id="btnNewBottom">Formular neu eingeben</button></div>
 </main>
 <footer>Planungshilfe – ersetzt nicht die Prüfung durch den verantwortlichen Piloten. Maßgeblich: FHB/AFM, FBH-B D40 und offizielles Flugwetter-Briefing.</footer>
 
+
+<dialog id="pdfDlg">
+  <h2>PDF-Vorschau</h2>
+  <div class="note" id="pdfHint"></div>
+  <div id="pdfPages"></div>
+  <div class="row" style="margin-top:10px;position:sticky;bottom:0;background:#fff;padding:8px 0"><button class="btn r" id="pdfSave">Als PDF speichern / teilen</button><button class="btn o" id="pdfClose">Schließen</button></div>
+</dialog>
+<dialog id="apDlg">
+  <h2>Flugplatzdaten</h2>
+  <div class="note">Platzhöhen werden automatisch eingetragen, wenn der ICAO-Code bekannt ist. Eingebaut sind nur wenige Plätze (ungeprüft). Weitere Plätze hier einfügen, eine Zeile je Platz: <b>ICAO;Name;Höhe in ft</b>, z. B. <code>LOXZ;Zeltweg;2200</code>. Die Werte vorher gegen die AIP prüfen.</div>
+  <textarea id="apText" rows="8" placeholder="LOXT;Langenlebarn;577"></textarea>
+  <div class="note" id="apMsg"></div>
+  <div class="row" style="margin-top:8px"><button class="btn" id="apSave">Speichern</button><button class="btn o" id="apClear">Eigene Daten löschen</button><button class="btn o" id="apClose">Schließen</button></div>
+</dialog>
 
 <dialog id="acDlg">
   <h2>Flugzeuge · Basisleermassen</h2>
@@ -192,6 +237,10 @@
 </dialog>
 <script src="js/brand-assets.js"></script>
 <script src="lib/jspdf.umd.min.js"></script>
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf.worker.min.js"></script>
+<script src="js/airports-at.js"></script>
+<script src="js/files.js"></script>
 <script src="js/aircraft.js"></script>
 <script src="js/afm-data.js"></script>
 <script src="js/core.js"></script>

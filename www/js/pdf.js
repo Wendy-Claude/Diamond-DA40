@@ -193,7 +193,7 @@ function pdfPages(r){
     st("Start",P.to); st("Landung DEST",P.ldDest); if(r.withAlt) st("Landung ALTN",P.ldAltn);
     pg.para("Start-/Landestrecken aus AFM-Tabellen (Kap. 5.3.7/5.3.12), interpoliert nach Masse. Zuschläge nacheinander angewendet; Wind auf Roll- und Gesamtstrecke, Neigung/Belag auf die Rollstrecke."+(r.fairingsOff?" Ohne Radverkleidungen: +20 m / +30 m (Start), Steigrate -20/-40 ft/min.":""),5.9);
     const gt=(title,arr)=>{ pg.h(title); const rows=[["Verfahren","ROC","TAS / GS","Gradient","gefordert"]];
-      arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label,f0(g.roc)+" ft/min",f0(g.tas)+" / "+f0(g.gs)+" kt",f1(g.grad)+" %",f1(g.req)+" % = "+f0(g.rocReq)+" ft/min"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
+      arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label,f0(g.roc)+" ft/min",f0(g.tas)+" / "+f0(g.gs)+" kt",f1(g.grad)+" % / "+f0(g.ftnm)+" ft/NM",f1(g.req)+" % = "+f0(g.rocReq)+" ft/min"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
       if(arr.length===0) rows.push(["Daten fehlen","","","",""]);
       pg.table([46,20,22,16,28],rows,{head:true,align:["","r","r","r","r"],sz:6.5}); };
     gt(`Steiggradient Abflug ${ap.dep.icao||""} (TOM ${f0(W.tom.m)} kg)`,P.climbDep);
@@ -223,11 +223,11 @@ function pdfPages(r){
 
 async function makePdf(mode){
   const st=$("pdfStatus");
-  if(!window.jspdf){ st.textContent="PDF-Bibliothek nicht geladen (Internetverbindung nötig)."; return; }
+  if(!window.jspdf){ st.textContent="PDF-Bibliothek nicht geladen ."; return; }
   st.textContent="PDF wird erstellt …";
   const r={...R};
   r.cs=val("cs"); r.reg=val("reg"); r.dofTxt=val("dof")?val("dof").split("-").reverse().join("."):"—";
-  r.eetDest=num("eetDest")||0; r.eetAltn=num("eetAltn")||0; r.appr=num("apprMin")||0; r.cruisePwr=val("cruisePwr"); r.climbMin=val("fuelMethod")==="rule"?0:(num("climbMin")||0);
+  r.cruisePwr=val("cruisePwr"); r.climbMin=0;
   r.fairingsOff=val("fairingsOff"); r.cls=r.withAlt?null:val("cls");
   const pages=pdfPages(r); const N=pages.length;
   const {jsPDF}=window.jspdf; let doc;
@@ -243,6 +243,6 @@ async function makePdf(mode){
   doc.setProperties({title:"Fuel & Performance Planning D40 "+(r.cs||""),author:"FlFlATS",subject:FBH.stand});
   const fn=`D40_FPP_${(r.cs||"").replace(/\W+/g,"")}_${(val("dof")||"").replace(/-/g,"")}_${mode==="a5"?"A5":"Broschuere_A4"}.pdf`;
   const blob=doc.output("blob");
-  const ok=await offerFile(fn,blob);
-  st.textContent=ok?(mode==="a5"?"A5-PDF erstellt.":"Broschüre erstellt – beidseitig drucken, an der kurzen Kante wenden, falten."):"Speichern nicht möglich.";
+  st.textContent="";
+  await showPdfPreview(blob,fn,mode==="a5"?"A5-Seiten – zum Speichern oder Teilen „PDF speichern“ drücken.":"Broschüre: auf A4 quer beidseitig drucken, an der kurzen Kante wenden, in der Mitte falten.");
 }

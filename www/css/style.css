@@ -69,3 +69,8 @@ dialog::backdrop{background:rgba(31,36,25,.6)}
 .acr{display:grid;grid-template-columns:70px 1fr 1fr;gap:6px;align-items:end;border-bottom:1px solid var(--line);padding:8px 0}
 .acr .reg{font-weight:700;padding-bottom:8px}.acr .wide{grid-column:2/4;display:grid;grid-template-columns:1fr 2fr;gap:6px}
 .acr .st{grid-column:1/4;font-size:12px}.acr .st.ok{color:var(--good)}.acr .st.miss{color:#c57a00}.acr .st.bad{color:var(--red)}
+
+.topbtn{margin:10px 0}.topbtn .btn{width:100%;padding:12px}
+#pdfDlg{max-width:760px}#pdfPages{display:flex;flex-direction:column;gap:10px;align-items:center}.pdfpage{box-shadow:0 1px 6px rgba(0,0,0,.35);background:#fff}
+table.fuel input{width:100%;min-width:70px}table.fuel td{vertical-align:middle}table.fuel td.small{font-size:11.5px;color:var(--mut)}
+.fuel small{color:var(--mut)}

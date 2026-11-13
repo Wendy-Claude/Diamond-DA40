@@ -120,6 +120,38 @@ function runwayDistances(kind,mass,pa,oat,headwind,surface,slope,fairingsOff){
   return {ok:true,roll,d50,steps,note:t.note};
 }
 
+
+/* ===== Steigflug / Reiseflug (AFM 5.3.10, 5.3.11) ===== */
+function isaTemp(paFt){ return 15-1.98*paFt/1000; }
+function profileAt(mass,pa){ // [min, USG, NM] ab Meereshoehe (ISA), Masse interpoliert
+  const P=AFM_DATA.climbProfile, PA=AFM_DATA.climbProfilePA;
+  const [lo,hi,t]=massBracket(mass);
+  const at=(m)=>{ const [i,ti]=bracket(PA,Math.max(0,Math.min(pa,PA[PA.length-1])));
+    return [0,1,2].map(k=>lerp(P[m][i][k],P[m][i+1][k],ti)); };
+  const a=at(lo), b=at(hi); return a.map((v,k)=>lerp(v,b[k],t));
+}
+/** Steigflug von Platzhoehe (PA) auf Reiseflughoehe (PA), 88 KIAS / 92 %. AFM: +5 % Zeit/Treibstoff, +10 % Strecke je 10 C ueber ISA. */
+function climbToAlt(mass,depPA,depOAT,cruisePA){
+  if(cruisePA>16000) return {ok:false,note:"Reiseflughöhe > 16.000 ft – außerhalb der AFM-Tabelle"};
+  if(mass>FBH.maxTOM+0.01) return {ok:false,note:"Masse über 1310 kg"};
+  const a=profileAt(mass,Math.max(depPA,0)), b=profileAt(mass,cruisePA);
+  let min=Math.max(0,b[0]-a[0]), usg=Math.max(0,b[1]-a[1]), nm=Math.max(0,b[2]-a[2]);
+  const dev=Math.max(0,(depOAT==null?isaTemp(depPA):depOAT)-isaTemp(depPA));
+  const ft=1+0.05*dev/10, fd=1+0.10*dev/10;
+  return {ok:true,min:min*ft,usg:usg*ft,nm:nm*fd,dev,note:dev>0?`ISA+${dev.toFixed(0)} °C: Zeit/Treibstoff +${(5*dev/10).toFixed(1)} %, Strecke +${(10*dev/10).toFixed(1)} % (AFM 5.3.10)`:""};
+}
+/** Reiseflug-TAS aus AFM 5.3.11 (1310 kg), Leistung zwischen den Stufen 45/60/75/92 % linear interpoliert */
+function cruiseTas(paFt,oatC,power){
+  const D=AFM_DATA, pa=Math.max(D.cruisePA[0],Math.min(paFt,D.cruisePA[D.cruisePA.length-1]));
+  const dev=Math.max(D.cruiseDev[0],Math.min(oatC-isaTemp(paFt),D.cruiseDev[D.cruiseDev.length-1]));
+  const [i,ti]=bracket(D.cruisePA,pa), [j,tj]=bracket(D.cruiseDev,dev);
+  const tas=p=>{ const T=D.cruiseTas[p]; return lerp(lerp(T[i][j],T[i][j+1],tj),lerp(T[i+1][j],T[i+1][j+1],tj),ti); };
+  const levels=[45,60,75,92]; if(power<levels[0]||power>levels[3]) return null;
+  let k=0; while(k<levels.length-2&&power>levels[k+1]) k++;
+  const t=(power-levels[k])/(levels[k+1]-levels[k]);
+  return lerp(tas(levels[k]),tas(levels[k+1]),t);
+}
+
 /* ===== METAR / TAF ===== */
 function parseWind(tok){
   const m=/^(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?(KT|MPS)$/.exec(tok);
@@ -226,4 +258,4 @@ function tafTempAt(taf,t){
 }
 function fmtZ(d){ if(!d) return "—"; const p=n=>String(n).padStart(2,"0"); return p(d.getUTCDate())+"/"+p(d.getUTCHours())+p(d.getUTCMinutes())+"Z"; }
 
-if(typeof module!=="undefined") module.exports={AFM_DATA,massBracket,distMass,cgFwdLimit,CG_AFT,interp2,pressAlt,tasFromIas,vrVapp,climbRoc,runwayDistances,windComponents,parseMetar,parseTaf,tafWindAt,tafTempAt,tafRelevant,tafCovers,fmtZ,windFactor};
+if(typeof module!=="undefined") module.exports={AFM_DATA,isaTemp,climbToAlt,cruiseTas,massBracket,distMass,cgFwdLimit,CG_AFT,interp2,pressAlt,tasFromIas,vrVapp,climbRoc,runwayDistances,windComponents,parseMetar,parseTaf,tafWindAt,tafTempAt,tafRelevant,tafCovers,fmtZ,windFactor};
