@@ -3,26 +3,160 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1f3d1f">
+<meta name="theme-color" content="#535c47">
 <title>D40 Performance &amp; Fuel</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <header>
-  <img src="icons/icon-192.png" alt="" width="48" height="48">
+  <div class="hrow"><img class="r" src="img/roundel.png" alt=""><div class="org"><b>ÖSTERREICHISCHES BUNDESHEER</b><span>Institut Flieger</span></div><img class="b" src="img/badge.png" alt=""></div>
   <h1>D40 Performance &amp; Fuel</h1>
+  <div class="sub">Grundlage FBH-B D40 (Stand 01 09 26) · METAR/TAF aviationweather.gov</div>
 </header>
 <main>
-  <section>
-    <h2>Flugzeug</h2>
-    <ul id="aircraft"></ul>
-  </section>
-  <p class="warn">Hilfsmittel zur Flugvorbereitung. Es ersetzt nicht das AFM. Der Pilot bleibt für die Prüfung aller Werte verantwortlich.</p>
-  <p class="ver">Version 0.1 (Gerüst) &ndash; Berechnungen folgen</p>
+
+<section>
+  <h2>Flugdaten</h2>
+  <div class="g">
+    <label>Datum (DOF)<input type="date" id="dof" data-k></label>
+    <label>Rufzeichen<input id="cs" data-k placeholder="z.B. MOETA 1"></label>
+    <label>Registration<select id="reg" data-k><option>3H-DA</option><option>3H-DB</option><option>3H-DC</option><option>3H-DD</option></select></label>
+    <label>Flugregeln<select id="rules" data-k><option>IFR</option><option>VFR</option></select></label>
+    <label>Startflugplatz (ICAO)<input id="dep" data-k maxlength="4" placeholder="LOWL" style="text-transform:uppercase"></label>
+    <label>Zielflugplatz (ICAO)<input id="dest" data-k maxlength="4" placeholder="LOWS" style="text-transform:uppercase"></label>
+    <label class="altonly">Alternate (ICAO)<input id="altn" data-k maxlength="4" placeholder="LOWW" style="text-transform:uppercase"></label>
+    <label>ETD (UTC, hhmm)<input id="etd" data-k inputmode="numeric" placeholder="0900" value="0900"></label>
+    <label>EET DEP → IAF DEST (min)<input id="eetDest" data-k inputmode="decimal" value="45"></label>
+    <label>Anflug IAF → Landung (min)<input id="apprMin" data-k inputmode="decimal" value="15"></label>
+    <label class="altonly">EET DEST → IAF ALTN (min)<input id="eetAltn" data-k inputmode="decimal" value="30"></label>
+  </div>
+  <div class="note" id="etaOut"></div>
+</section>
+
+<section>
+  <h2>Planungsvariante</h2>
+  <div class="plan">
+    <span class="muted" style="font-size:12px">WITHOUT</span>
+    <label class="sw" aria-label="Planungsvariante"><input type="checkbox" id="withAlt" data-k checked><span></span></label>
+    <span class="muted" style="font-size:12px">WITH</span>
+    <span id="planLabel"></span>
+    <label class="noaltonly" style="flex-direction:row;align-items:center;gap:6px">Class<select id="cls" data-k style="width:auto"><option>II</option><option>I</option></select></label>
+  </div>
+  <div id="quotes"></div>
+</section>
+
+<section>
+  <h2>Wetter &amp; Flugplätze</h2>
+  <div class="note">„Laden“ holt METAR und TAF von aviationweather.gov. Ist der Abruf in dieser Ansicht gesperrt, den Link öffnen, die Meldungen kopieren und hier einfügen. Gelb markiert: TAF-Gruppen im Zeitraum ETA ± 1 h.</div>
+  <div class="g" style="margin-top:8px">
+    <label>Mag. Variation (° E +)<input id="varE" data-k inputmode="decimal" value="4.5"></label>
+    <label>Steiggradient Abflug gefordert (%)<input id="reqGradDep" data-k inputmode="decimal" value="3.3"></label>
+    <label>Steiggradient Durchstarten gefordert (%)<input id="reqGradGA" data-k inputmode="decimal" value="2.5"></label>
+    <label class="chk"><input type="checkbox" id="fairingsOff" data-k>ohne Radverkleidungen</label>
+  </div>
+  <div class="ap"><h3>DEPARTURE <span class="row"><a id="depLink" class="btn s o" target="_blank" rel="noopener" href="#">aviationweather.gov</a><button type="button" class="btn s" id="depBtn">Laden</button></span></h3>
+<div class="wx" id="depWx"></div>
+<label>METAR<textarea id="depMetar" data-k rows="2" placeholder="METAR …"></textarea></label>
+<label style="margin-top:6px">TAF<textarea id="depTaf" data-k rows="3" placeholder="TAF …"></textarea></label>
+<div class="g" style="margin-top:8px">
+<label>Platzhöhe (ft)<input id="depElev" data-k inputmode="decimal"></label>
+<label>Piste (z.B. 26 oder 263°)<input id="depRwy" data-k inputmode="decimal"></label>
+<label>TORA (m)<input id="depLen" data-k inputmode="decimal"></label>
+<label>Belag<select id="depSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
+<label>Neigung (% + bergauf)<input id="depSlope" data-k inputmode="decimal" value="0"></label>
+<label>Temperatur<select id="depTempMode" data-k><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>OAT manuell (°C)<input id="depTempMan" data-k inputmode="decimal"></label>
+<label>Wind manuell (ddd/ff)<input id="depWindMan" data-k placeholder="leer = TAF"></label>
+<label>QNH manuell (hPa)<input id="depQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
+</div><div id="depOut"></div></div><div class="ap"><h3>DESTINATION <span class="row"><a id="destLink" class="btn s o" target="_blank" rel="noopener" href="#">aviationweather.gov</a><button type="button" class="btn s" id="destBtn">Laden</button></span></h3>
+<div class="wx" id="destWx"></div>
+<label>METAR<textarea id="destMetar" data-k rows="2" placeholder="METAR …"></textarea></label>
+<label style="margin-top:6px">TAF<textarea id="destTaf" data-k rows="3" placeholder="TAF …"></textarea></label>
+<div class="g" style="margin-top:8px">
+<label>Platzhöhe (ft)<input id="destElev" data-k inputmode="decimal"></label>
+<label>Piste (z.B. 26 oder 263°)<input id="destRwy" data-k inputmode="decimal"></label>
+<label>LDA (m)<input id="destLen" data-k inputmode="decimal"></label>
+<label>Belag<select id="destSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
+<label>Neigung (% + bergauf)<input id="destSlope" data-k inputmode="decimal" value="0"></label>
+<label>Temperatur<select id="destTempMode" data-k><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>OAT manuell (°C)<input id="destTempMan" data-k inputmode="decimal"></label>
+<label>Wind manuell (ddd/ff)<input id="destWindMan" data-k placeholder="leer = TAF"></label>
+<label>QNH manuell (hPa)<input id="destQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
+</div><div id="destOut"></div></div><div class="ap altonly"><h3>ALTERNATE <span class="row"><a id="altnLink" class="btn s o" target="_blank" rel="noopener" href="#">aviationweather.gov</a><button type="button" class="btn s" id="altnBtn">Laden</button></span></h3>
+<div class="wx" id="altnWx"></div>
+<label>METAR<textarea id="altnMetar" data-k rows="2" placeholder="METAR …"></textarea></label>
+<label style="margin-top:6px">TAF<textarea id="altnTaf" data-k rows="3" placeholder="TAF …"></textarea></label>
+<div class="g" style="margin-top:8px">
+<label>Platzhöhe (ft)<input id="altnElev" data-k inputmode="decimal"></label>
+<label>Piste (z.B. 26 oder 263°)<input id="altnRwy" data-k inputmode="decimal"></label>
+<label>LDA (m)<input id="altnLen" data-k inputmode="decimal"></label>
+<label>Belag<select id="altnSurf" data-k><option value="paved">befestigt, trocken</option><option value="wet">befestigt, nass</option><option value="grass5">Gras 0–5 cm</option><option value="grass10">Gras 5–10 cm</option><option value="grass25">Gras 10–25 cm</option><option value="grasswet">nasses Gras</option><option value="soft">weicher Boden</option></select></label>
+<label>Neigung (% + bergauf)<input id="altnSlope" data-k inputmode="decimal" value="0"></label>
+<label>Temperatur<select id="altnTempMode" data-k><option value="interp">TAF TX/TN zum Zeitpunkt</option><option value="tx">TAF TX (konservativ)</option><option value="metar">METAR</option><option value="manual">manuell</option></select></label>
+<label>OAT manuell (°C)<input id="altnTempMan" data-k inputmode="decimal"></label>
+<label>Wind manuell (ddd/ff)<input id="altnWindMan" data-k placeholder="leer = TAF"></label>
+<label>QNH manuell (hPa)<input id="altnQnhMan" data-k inputmode="decimal" placeholder="leer = METAR"></label>
+</div><div id="altnOut"></div></div>
+</section>
+
+<section>
+  <h2>Treibstoff (FBH-B 5.3)</h2>
+  <div class="g">
+    <label>Methode<select id="fuelMethod" data-k><option value="rule">Faustformel 6,6 USG/h</option><option value="power">FHB-Tabelle 4.4</option></select></label>
+    <label>Reiseleistung (%)<select id="cruisePwr" data-k><option>55</option><option>60</option><option>65</option><option>70</option><option selected>75</option><option>80</option><option>85</option><option>90</option></select></label>
+    <label>Steigflug @ 92 % (min)<input id="climbMin" data-k inputmode="decimal" value="0"></label>
+    <label class="altonly">Warteverfahren<select id="holdMin" data-k><option value="30">30 min</option><option value="15">15 min (Radar/VMC)</option></select></label>
+    <label class="altonly">Leistung Warteverfahren (%)<select id="holdPwr" data-k><option>45</option><option>50</option><option>55</option><option>60</option><option>65</option><option>70</option><option selected>75</option></select></label>
+    <label>Fuel on board (USG)<input id="fob" data-k inputmode="decimal" value="39"></label>
+  </div>
+  <div id="fuelOut"></div>
+</section>
+
+<section>
+  <h2>Weight &amp; Balance (FBH-B 6.1)</h2>
+  <div class="g">
+    <label>Leermasse (kg)<input id="emptyM" data-k inputmode="decimal"></label>
+    <label>Leermoment (mkg)<input id="emptyMom" data-k inputmode="decimal"></label>
+    <label>Front seat links (kg)<input id="seatL" data-k inputmode="decimal" value="85"></label>
+    <label>Front seat rechts (kg)<input id="seatR" data-k inputmode="decimal" value="85"></label>
+    <label>Rear seat links (kg)<input id="rearL" data-k inputmode="decimal" value="0"></label>
+    <label>Rear seat rechts (kg)<input id="rearR" data-k inputmode="decimal" value="0"></label>
+    <label>FWD Baggage (kg, max 45)<input id="bagF" data-k inputmode="decimal" value="5"></label>
+    <label>AFT Baggage (kg, max 18)<input id="bagA" data-k inputmode="decimal" value="0"></label>
+  </div>
+  <div id="wbOut"></div>
+</section>
+
+<section>
+  <h2>Performance (FBH-B 4)</h2>
+  <div id="perfOut"></div>
+</section>
+
+<section>
+  <h2>Prüfung <span class="badge" id="warnCount">0</span></h2>
+  <ul id="warnOut"></ul>
+</section>
+
+<section>
+  <h2>PDF</h2>
+  <div class="row">
+    <button class="btn r" id="btnBooklet">Broschüre A5 (A4 beidseitig)</button>
+    <button class="btn o" id="btnA5">A5 Einzelseiten</button>
+        <button class="btn o" id="btnReset">Zurücksetzen</button>
+  </div>
+  <div class="note" id="pdfStatus">Broschüre: auf A4 quer beidseitig drucken, an der kurzen Kante wenden, in der Mitte falten.</div>
+</section>
 </main>
-<script src="app.js"></script>
+<footer>Planungshilfe – ersetzt nicht die Prüfung durch den verantwortlichen Piloten. Maßgeblich: FHB/AFM, FBH-B D40 und offizielles Flugwetter-Briefing.</footer>
+
+<script src="js/brand-assets.js"></script>
+<script src="lib/jspdf.umd.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/ui.js"></script>
 </body>
 </html>

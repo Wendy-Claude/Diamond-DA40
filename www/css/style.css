@@ -1,0 +1,62 @@
+@font-face{font-family:"Libre Franklin";font-weight:400;font-display:swap;src:url(../fonts/libre-franklin-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Libre Franklin";font-weight:500;font-display:swap;src:url(../fonts/libre-franklin-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Libre Franklin";font-weight:700;font-display:swap;src:url(../fonts/libre-franklin-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(../fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:500;font-display:swap;src:url(../fonts/ibm-plex-mono-latin-500-normal.woff2) format("woff2")}
+
+:root{--olive:#525c46;--dark:#373f2f;--red:#c8102e;--light:#eceee7;--line:#d5d8cc;--ink:#1f2419;--muted:#6b7064;--good:#2b6e32;--mark:#ffec96}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Libre Franklin","Franklin Gothic Book","Franklin Gothic Medium",Arial,sans-serif;color:var(--ink);background:#f6f7f3;font-size:15px;line-height:1.4}
+header{background:var(--olive) url(../img/topo-background.jpg) center/cover;color:#fff;padding:14px 16px 18px;position:relative}
+.hrow{display:flex;align-items:center;gap:12px}
+.hrow img.r{width:44px;height:44px}.hrow img.b{height:54px;margin-left:auto}
+.org b{display:block;font-size:13px;letter-spacing:.04em}.org span{font-size:12px;opacity:.9}
+h1{font-weight:500;font-size:22px;margin:14px 0 2px}
+.sub{font-size:13px;opacity:.85}
+main{max-width:980px;margin:0 auto;padding:12px}
+section{background:#fff;border:1px solid var(--line);border-radius:6px;margin:12px 0;padding:12px 14px}
+h2{font-size:16px;font-weight:700;color:var(--dark);margin:0 0 10px;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--red);padding-bottom:6px}
+h2::before{content:"";width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:11px solid var(--red)}
+h3{font-size:14px;margin:12px 0 6px;color:var(--olive)} h4{font-size:13px;margin:12px 0 4px;color:var(--olive)}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px 10px}
+label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+input,select,textarea{font:inherit;font-size:15px;padding:7px 8px;border:1px solid #c5c9bc;border-radius:4px;background:#fff;color:var(--ink);width:100%}
+textarea{font-family:"IBM Plex Mono",monospace;font-size:12.5px;min-height:58px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--olive);border-color:var(--olive)}
+.ap{border:1px solid var(--line);border-radius:6px;padding:10px;margin:10px 0;background:#fafbf8}
+.ap h3{margin-top:0;display:flex;justify-content:space-between;align-items:center}
+.btn{font:inherit;font-size:14px;background:var(--olive);color:#fff;border:0;border-radius:4px;padding:9px 14px;cursor:pointer}
+.btn.s{padding:6px 10px;font-size:13px}.btn.o{background:#fff;color:var(--olive);border:1px solid var(--olive)}.btn.r{background:var(--red)}
+.btn:active{transform:translateY(1px)}
+.wx{font-size:12px;color:var(--muted);margin:4px 0}
+.wx a{color:var(--olive)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:3px 12px;font-size:13px;margin:8px 0}
+.kv span{color:var(--muted)} .kv small{color:var(--muted);font-weight:400}
+.raw{font-family:"IBM Plex Mono",monospace;font-size:12px;background:#f3f4ef;padding:6px 8px;border-radius:4px;word-break:break-word}
+mark{background:var(--mark);padding:0 2px}
+.muted{color:var(--muted)}.small{font-weight:400;font-size:12px}
+table.t{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+.t th{background:var(--olive);color:#fff;text-align:left;font-weight:500;padding:5px 6px}
+.t td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.t .n{text-align:right;white-space:nowrap}
+.t tr.sum td{background:var(--light);font-weight:700}
+.t tr.bad td{color:var(--red);font-weight:500}.t tr.good td{color:var(--good)}
+.note{font-size:12px;color:var(--muted);margin:4px 0}
+svg.cg{width:100%;max-width:520px;display:block;margin:8px auto}
+/* Schieber */
+.plan{display:flex;align-items:center;gap:12px;background:var(--light);border-radius:6px;padding:10px 12px;flex-wrap:wrap}
+.sw{position:relative;width:62px;height:32px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#9aa08f;border-radius:32px;transition:.2s;cursor:pointer}
+.sw span::before{content:"";position:absolute;width:26px;height:26px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+span{background:var(--olive)}.sw input:checked+span::before{transform:translateX(30px)}
+#planLabel{font-weight:700;letter-spacing:.02em;color:var(--dark)}
+blockquote{margin:8px 0;padding:8px 10px 8px 12px;background:var(--light);border-left:4px solid var(--red);font-size:13.5px}
+.qref{font-size:11.5px;font-weight:700;color:var(--olive);margin-bottom:3px}
+body.noalt .altonly{display:none} body:not(.noalt) .noaltonly{display:none}
+#warnOut{margin:6px 0;padding-left:18px;font-size:13.5px}#warnOut li{color:var(--red);margin:2px 0}#warnOut li.ok{color:var(--good)}
+.badge{background:var(--red);color:#fff;border-radius:10px;padding:0 8px;font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+footer{font-size:12px;color:var(--muted);text-align:center;padding:16px}
+.chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)} .chk input{width:auto}
+details summary{cursor:pointer;color:var(--olive);font-size:13px;margin:6px 0}
