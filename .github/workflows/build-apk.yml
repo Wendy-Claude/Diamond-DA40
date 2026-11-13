@@ -30,10 +30,25 @@ jobs:
         run: |
           mkdir -p ~/.android && cp android-signing/debug.keystore ~/.android/debug.keystore
           sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"0.${{ github.run_number }}\"/" android/app/build.gradle
-          grep -E "versionCode|versionName" android/app/build.gradle
+          python3 - <<'PY'
+          p = "android/app/build.gradle"
+          s = open(p).read()
+          cfg = ('    signingConfigs {\n        debug {\n            storeFile file("../../android-signing/debug.keystore")\n'
+                 '            storePassword "android"\n            keyAlias "androiddebugkey"\n            keyPassword "android"\n        }\n    }\n')
+          s = s.replace("android {\n", "android {\n" + cfg, 1)
+          open(p, "w").write(s)
+          PY
+          grep -E "versionCode|versionName|storeFile" android/app/build.gradle
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
+      - name: Verify signing certificate
+        run: |
+          AS="$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner"
+          "$AS" verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | tee certs.txt
+          EXP=$(keytool -list -v -keystore android-signing/debug.keystore -storepass android | grep 'SHA256:' | head -1 | sed 's/.*SHA256: //' | tr -d ':' | tr 'A-F' 'a-f')
+          echo "erwartet: $EXP"
+          grep -qi "$EXP" certs.txt
       - uses: actions/upload-artifact@v4
         with:
           name: D40-Performance-Fuel-debug-apk
