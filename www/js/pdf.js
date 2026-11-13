@@ -192,8 +192,8 @@ function pdfPages(r){
     const st=(lab,dd)=>{ if(dd&&dd.ok) pg.para(lab+": "+dd.steps.map(s=>s[0]+" "+f0(s[1])+"/"+f0(s[2])+" m").join("  >  ")+(dd.note?" · "+dd.note:""),5.9); };
     st("Start",P.to); st("Landung DEST",P.ldDest); if(r.withAlt) st("Landung ALTN",P.ldAltn);
     pg.para("Start-/Landestrecken aus AFM-Tabellen (Kap. 5.3.7/5.3.12), interpoliert nach Masse. Zuschläge nacheinander angewendet; Wind auf Roll- und Gesamtstrecke, Neigung/Belag auf die Rollstrecke."+(r.fairingsOff?" Ohne Radverkleidungen: +20 m / +30 m (Start), Steigrate -20/-40 ft/min.":""),5.9);
-    const gt=(title,arr)=>{ pg.h(title); const rows=[["Verfahren","ROC","TAS / GS","Gradient","gefordert"]];
-      arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label,f0(g.roc)+" ft/min",f0(g.tas)+" / "+f0(g.gs)+" kt",f1(g.grad)+" %",f1(g.req)+" % = "+f0(g.rocReq)+" ft/min"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
+    const gt=(title,arr)=>{ pg.h(title); const rows=[["Verfahren","ROC","TAS / GS","Gradient netto","gefordert"]];
+      arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label,f0(g.roc)+" ft/min",f0(g.tas)+" / "+f0(g.gs)+" kt",f1(g.grad)+" % (brutto "+f1(g.gross)+")",f1(g.req)+" % = "+f0(g.rocReq)+" ft/min"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
       if(arr.length===0) rows.push(["Daten fehlen","","","",""]);
       pg.table([46,20,22,16,28],rows,{head:true,align:["","r","r","r","r"],sz:6.5}); };
     gt(`Steiggradient Abflug ${ap.dep.icao||""} (TOM ${f0(W.tom.m)} kg)`,P.climbDep);
