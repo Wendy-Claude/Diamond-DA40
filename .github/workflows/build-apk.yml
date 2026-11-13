@@ -17,6 +17,9 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: pip install pillow
+      - run: npm test
+      - name: Build single-file HTML
+        run: mkdir -p out && python3 scripts/bundle_html.py out/D40_Performance_Fuel.html
       - run: npx cap add android
       - run: python3 scripts/make_icons.py
       - run: npx cap sync android
@@ -27,3 +30,7 @@ jobs:
         with:
           name: D40-Performance-Fuel-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: D40-Performance-Fuel-html
+          path: out/D40_Performance_Fuel.html
