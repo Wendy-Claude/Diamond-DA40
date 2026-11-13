@@ -41,9 +41,9 @@ function compute(guess){
   const withAlt=val("withAlt"); r.withAlt=withAlt;
   const ifr=val("rules")==="IFR"; r.ifr=ifr;
   r.etd=etdDate();
-  const eetD=guess.d, appr=num("apprMin")||0, eetA=guess.a;
-  r.etaDest=addMin(r.etd,eetD+appr);
-  r.etaAltn=withAlt?addMin(r.etaDest,eetA+appr):null;
+  const eetD=guess.d, eetA=guess.a, appr=0;
+  r.etaDest=addMin(r.etd,eetD);
+  r.etaAltn=withAlt?addMin(r.etaDest,eetA):null;
   const timeOf={dep:r.etd,dest:r.etaDest,altn:r.etaAltn};
   const ref=r.etd||new Date();
   const varE=num("varE")||0;
@@ -136,24 +136,35 @@ function compute(guess){
     o.crMin=o.remNm/o.tas*60; o.crUsg=o.crMin/60*F.ffCruise; o.min=cl.min+o.crMin; o.usg=cl.usg+o.crUsg; o.ok=true;
     return o;
   };
+  /* Anflug IAF -> Touchdown: Standard FBH-B (IFR 2 USG, Zeit = 2 USG / 6,6 USG/h) oder selbst: Distanz + Hoehe am IAF, Zeit mit TAS */
+  const approach=(pre,ap)=>{
+    const mode=val("apMode"+pre)==="self"?"self":"fbh";
+    if(mode==="fbh") return {mode,ok:true,usg:ifr?2:0,min:ifr?2/6.6*60:0};
+    const dist=num("apDist"+pre), alt=parseAlt(val("apAlt"+pre));
+    if(!dist||alt==null) return {mode,ok:false,usg:0,min:0,note:"Anflug: Distanz und Höhe am IAF eingeben"};
+    const dev=ap&&ap.temp!=null&&ap.pa!=null?ap.temp-isaTemp(ap.pa):0;
+    const tas=num("tas"+pre)||cruiseTas(alt,isaTemp(alt)+dev,F.pwr);
+    if(!tas) return {mode,ok:false,usg:0,min:0,note:"Anflug: TAS nicht ermittelbar – TAS manuell eingeben"};
+    const min=dist/tas*60; return {mode,ok:true,dist,alt,tas,min,usg:min/60*F.ffCruise};
+  };
   F.tripLeg=leg("Trip",r.ap.dep,tomEst,"Trip");
   F.tripEnroute=F.tripLeg.ok?F.tripLeg.usg:0;
-  F.tripAppr = ifr?2:0;
+  F.tripAp=approach("Trip",r.ap.dest); F.tripAppr=F.tripAp.usg; if(!F.tripAp.ok) r.warn.push("Trip fuel: "+F.tripAp.note+".");
   F.trip = F.tripEnroute+F.tripAppr;
   F.cont = 0.10*F.trip;
-  r.eetDest = F.tripLeg.ok?F.tripLeg.min:0;
+  r.eetDest = F.tripLeg.ok?F.tripLeg.min:0; r.tripTot=r.eetDest+F.tripAp.min;
   const lmEst=tomEst-F.trip*kU;
   if(withAlt){
     F.altLeg=leg("Alt",r.ap.dest,lmEst,"Alternate");
     F.holdMin = ifr?(+val("holdMin")):0;
     F.holdPwr = +val("holdPwr");
     F.altEnroute = F.altLeg.ok?F.altLeg.usg:0;
-    F.altAppr = ifr?2:0;
+    F.altAp=approach("Alt",r.ap.altn); F.altAppr=F.altAp.usg; if(!F.altAp.ok) r.warn.push("Alternate fuel: "+F.altAp.note+".");
     F.altHold = F.holdMin/60*FBH.ff[F.holdPwr];
     F.alt = F.altEnroute+F.altAppr+F.altHold;
     F.add = 0;
-    r.eetAltn = F.altLeg.ok?F.altLeg.min:0;
-  } else { F.alt=0; F.altEnroute=0; F.altAppr=0; F.altHold=0; F.add=5; r.eetAltn=0; }
+    r.eetAltn = F.altLeg.ok?F.altLeg.min:0; r.altTot=r.eetAltn+F.altAp.min;
+  } else { F.alt=0; F.altEnroute=0; F.altAppr=0; F.altHold=0; F.add=5; r.eetAltn=0; r.altTot=0; F.altAp=null; }
   if(!F.tripLeg.ok) r.warn.push("Trip fuel: "+F.tripLeg.note+".");
   if(withAlt&&F.altLeg&&!F.altLeg.ok) r.warn.push("Alternate fuel: "+F.altLeg.note+".");
   F.req = F.taxi+F.trip+F.cont+F.alt+F.add+F.final;
@@ -229,7 +240,7 @@ function compute(guess){
   else if(P.climbDep[0]&&P.climbDep[0].grad!=null&&!P.climbDep[0].ok) r.warn.push(`Abflug ${dep.icao}: Cruise Climb erreicht ${f1(rd)} % nicht – Take-off Climb anwenden (FBH-B 4.3 / LB 2113 Kap. 1.5).`);
   if(P.climbGA[0]&&P.climbGA[0].grad!=null&&!P.climbGA[0].ok) r.warn.push(`Durchstarten ${dst.icao}: geforderter Steiggradient ${f1(rg)} % wird nicht erreicht.`);
   r.appr=appr; r.tripMin=r.eetDest; r.guess=guess;
-  if(!guess.n&&(Math.abs(r.eetDest-guess.d)>1||Math.abs(r.eetAltn-guess.a)>1)) return compute({d:r.eetDest,a:r.eetAltn,n:1});
+  if(!guess.n&&(Math.abs(r.tripTot-guess.d)>1||Math.abs(r.altTot-guess.a)>1)) return compute({d:r.tripTot,a:r.altTot,n:1});
   return r;
 }
 
@@ -263,10 +274,13 @@ function render(){
     setT(p+"ClMin",ok?f0(L.cl.min):""); setT(p+"ClNm",ok?f0(L.cl.nm):""); setT(p+"ClF",ok?f1(L.cl.usg):"");
     setT(p+"CrInfo",ok?`TAS ${f0(L.tas)} kt (${L.tasSrc}) · ${f1(F.ffCruise)} USG/h`:"");
     setT(p+"CrMin",ok?f0(L.crMin):""); setT(p+"CrNm",ok?f0(L.remNm):""); setT(p+"CrF",ok?f1(L.crUsg):"");
-    setT(p+"TotMin",ok?f0(L.min):""); setT(p+"TotNm",ok?f0(L.dist):"");
+    setT(p+"TotNm",ok?f0(L.dist):"");
   };
-  legOut("t",F.tripLeg,r.ap.dep); setT("tAp",f1(F.tripAppr)); setT("tApInfo",r.ifr?"IFR: 2 USG":"VFR"); setT("tCont",f1(F.cont)); setT("tTotF",f1(F.trip+0));
-  if(r.withAlt){ legOut("a",F.altLeg,r.ap.dest); setT("aAp",f1(F.altAppr)); setT("aApInfo",r.ifr?"IFR: 2 USG":"VFR");
+  const apOut=(p,pre,A)=>{ const self=A&&A.mode==="self"; document.querySelectorAll(`tr.apself[data-for="${pre}"]`).forEach(tr=>tr.style.display=self?"":"none");
+    setT(p+"ApInfo",!A?"":self?(A.ok?`TAS ${f0(A.tas)} kt · ${f1(F.ffCruise)} USG/h`:A.note):(r.ifr?"2 USG (FBH-B 5.3), Zeit = 2 USG ÷ 6,6 USG/h":"VFR: kein Zuschlag"));
+    setT(p+"ApMin",A&&A.min?f0(A.min):""); setT(p+"ApNm",self&&A.ok?f0(A.dist):""); setT(p+"Ap",A?f1(A.usg):""); };
+  legOut("t",F.tripLeg,r.ap.dep); apOut("t","Trip",F.tripAp); setT("tTotMin",f0(r.tripTot)); setT("tCont",f1(F.cont)); setT("tTotF",f1(F.trip+0));
+  if(r.withAlt){ legOut("a",F.altLeg,r.ap.dest); apOut("a","Alt",F.altAp); setT("aTotMin",f0(r.altTot+(r.ifr?F.holdMin:0)));
     setT("aHoldInfo",r.ifr?`${F.holdMin} min @ ${F.holdPwr} % (${f1(FBH.ff[F.holdPwr])} USG/h)`:"entfällt (VFR)"); setT("aHoldMin",r.ifr?f0(F.holdMin):""); setT("aHoldF",f1(F.altHold)); setT("aTotF",f1(F.alt)); }
   const fr=(l,d,v,cls="")=>`<tr class="${cls}"><td>${l}</td><td>${d}</td><td class="n">${f1(v)}</td></tr>`;
   $("fuelOut").innerHTML=`<table class="t"><thead><tr><th>Position</th><th>Grundlage</th><th class="n">USG</th></tr></thead><tbody>
@@ -351,7 +365,6 @@ document.addEventListener("input",e=>{ if(e.target.dataset&&e.target.dataset.k!=
 document.addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.k!==undefined){ if(e.target.id==="reg") setEmpty(); render(); } });
 APS.forEach(a=>{ $(a+"Btn").onclick=()=>fetchWx(a); });
 $("btnBooklet").onclick=()=>makePdf("booklet");
-$("btnA5").onclick=()=>makePdf("a5");
 buildReg();
 if(!load()){ $("dof").value=new Date().toISOString().slice(0,10); }
 if(!acComplete(acLoad()[$("reg").value])){ const f=Object.keys(AC_DEFAULTS).find(k=>acComplete(acLoad()[k])); if(f) $("reg").value=f; }
@@ -404,7 +417,7 @@ function resetForm(){
   if(!confirm("Formular neu eingeben? Alle Eingaben und Werte werden geleert (gespeicherte Flüge und Flugzeugdaten bleiben erhalten).")) return;
   FIELDS().forEach(e=>{ if(e.tagName==="SELECT"){ let d=[...e.options].findIndex(o=>o.defaultSelected); e.selectedIndex=d<0?0:d; } else if(e.type==="checkbox") e.checked=e.defaultChecked; else e.value=""; });
   $("reg").selectedIndex=0; buildReg(); const f=Object.keys(AC_DEFAULTS).find(k=>acComplete(acLoad()[k])); if(f) $("reg").value=f;
-  $("dof").value=new Date().toISOString().slice(0,10); $("etd").value="0900"; $("apprMin").value="15"; $("varE").value="4.5";
+  $("dof").value=new Date().toISOString().slice(0,10); $("etd").value="0900"; $("varE").value="4.5";
   $("reqGradDep").value="3.3"; $("reqGradGA").value="2.5"; $("fob").value="39";
   ["dep","dest","altn"].forEach(a=>{ const e=$(a+"Elev"); delete e.dataset.auto; const n=$(a+"ElevNote"); if(n) n.textContent=""; $(a+"Wx").textContent=""; });
   setEmpty(); wxLink("dep"); wxLink("dest"); wxLink("altn"); render(); window.scrollTo(0,0);

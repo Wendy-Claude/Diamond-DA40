@@ -86,82 +86,70 @@ function pdfPages(r){
       ["Wind",fmtWind(o.wind)+(o.wsrc?" ("+o.wsrc+")":""),"Piste "+(o.rwy!=null?String(Math.round(o.rwy/10)).padStart(2,"0"):"—"),o.comp?(o.comp.head>=0?"HW ":"TW ")+f0(Math.abs(o.comp.head))+" kt / XW "+f0(o.comp.cross)+" kt":"—"],
     ],{sz:6.6,zebra:true});
   };
-  // 1 Deckblatt
+  const kg=v=>f1(v*(r.kgPerUsg||kgPerUsg(15)));
+  const rwy=o=>o&&o.rwy!=null?"RWY "+String(Math.round(o.rwy/10)).padStart(2,"0"):"—";
+  // Seite 1: Flugdaten + Treibstoff
   pages.push(pg=>{
     pg.frame("FUEL & PERFORMANCE PLANNING");
-    pg.color(C.grey); pg.font(7); pg.text("Leichtluftfahrzeugsystem D40 · MOETA",pg.m,pg.y); pg.y+=4;
-    pg.h("Flugdaten");
-    pg.table([34,46,30,40],[["Datum (DOF)",r.dofTxt,"Flugregeln",r.ifr?"IFR":"VFR"],["Rufzeichen",r.cs||"—","Registration",r.reg||"—"],["Planungsvariante",{true:"DESTINATION WITH DESTINATION ALTERNATE",false:"DESTINATION WITHOUT ALTERNATE"+(r.cls?" – Class "+r.cls:"")}[r.withAlt],"",""]],{sz:6.9});
-    pg.h("Flugplätze und Zeiten (UTC)");
-    const rows=[["","ICAO","Zeit","EET","Piste / Länge"]];
-    rows.push(["DEP",ap.dep.icao||"—","ETD "+hhmm(r.etd),"",(ap.dep.rwy!=null?"RWY "+String(Math.round(ap.dep.rwy/10)).padStart(2,"0"):"—")+(ap.dep.len?" · TORA "+f0(ap.dep.len)+" m":"")]);
-    rows.push(["DEST",ap.dest.icao||"—","ETA "+hhmm(r.etaDest),f0(r.eetDest)+" min + "+f0(r.appr)+" min Anflug",(ap.dest.rwy!=null?"RWY "+String(Math.round(ap.dest.rwy/10)).padStart(2,"0"):"—")+(ap.dest.len?" · LDA "+f0(ap.dest.len)+" m":"")]);
-    if(r.withAlt) rows.push(["ALTN",ap.altn.icao||"—","ETA "+hhmm(r.etaAltn),f0(r.eetAltn)+" min + "+f0(r.appr)+" min Anflug",(ap.altn.rwy!=null?"RWY "+String(Math.round(ap.altn.rwy/10)).padStart(2,"0"):"—")+(ap.altn.len?" · LDA "+f0(ap.altn.len)+" m":"")]);
-    pg.table([14,16,28,40,40],rows,{head:true,sz:6.8});
-    pg.h("Zusammenfassung");
-    pg.table([42,26,42,26],[
-      ["Minimum fuel",f1(F.req)+" USG","Fuel on board",f1(F.fob)+" USG"],
-      ["Extra fuel",f1(F.extra)+" USG","Endurance (6,6 USG/h)",F.endurance!=null?Math.floor(F.endurance/60)+":"+String(Math.round(F.endurance%60)).padStart(2,"0")+" h":"—"],
-      ["Take off mass / CG",f1(W.tom.m,0)+" kg / "+f1(W.tom.cg,3)+" m","Landing mass DEST / CG",f1(W.lmDest.m,0)+" kg / "+f1(W.lmDest.cg,3)+" m"],
-      ["VR",(P.vrTo.vr??"—")+" KIAS","VAPP DEST"+(P.vappAltn?" / ALTN":""),(P.vappDest.vapp??"—")+(P.vappAltn?" / "+(P.vappAltn.vapp??"—"):"")+" KIAS"],
-      ["Startrollstrecke / 15 m",P.to&&P.to.ok?f0(P.to.roll)+" / "+f0(P.to.d50)+" m":"—","Landerollstrecke DEST / 15 m",P.ldDest&&P.ldDest.ok?f0(P.ldDest.roll)+" / "+f0(P.ldDest.d50)+" m":"—"],
-    ],{sz:6.7});
-    pg.h(`Hinweise (${r.warn.length})`);
-    if(!r.warn.length) pg.para("Keine Grenzwertüberschreitung erkannt.",6.8);
-    else { pg.color(C.bad); r.warn.slice(0,9).forEach(w=>pg.para("• "+w,6.5)); if(r.warn.length>9) pg.para(`… und ${r.warn.length-9} weitere (siehe Tool).`,6.3); }
+    pg.table([30,44,26,40],[["Datum (DOF)",r.dofTxt,"Flugregeln",r.ifr?"IFR":"VFR"],["Rufzeichen",r.cs||"—","Registration",r.reg||"—"],["Planungsvariante",r.withAlt?"DESTINATION WITH ALTERNATE":"DESTINATION WITHOUT ALTERNATE"+(r.cls?" – Class "+r.cls:""),"Fuel on board",f1(F.fob)+" USG / "+kg(F.fob||0)+" kg"]],{sz:6.4});
+    const rows=[["","ICAO","Zeit UTC","Piste","Länge"]];
+    rows.push(["DEP",ap.dep.icao||"—","ETD "+hhmm(r.etd),rwy(ap.dep),ap.dep.len?"TORA "+f0(ap.dep.len)+" m":"—"]);
+    rows.push(["DEST",ap.dest.icao||"—","ETA "+hhmm(r.etaDest),rwy(ap.dest),ap.dest.len?"LDA "+f0(ap.dest.len)+" m":"—"]);
+    if(r.withAlt) rows.push(["ALTN",ap.altn.icao||"—","ETA "+hhmm(r.etaAltn),rwy(ap.altn),ap.altn.len?"LDA "+f0(ap.altn.len)+" m":"—"]);
+    pg.table([14,18,30,20,30],rows,{head:true,sz:6.4});
+    pg.h(`Treibstoff (FBH-B 5.3 · AFM 5.3.10/5.3.11) · ${F.method==="rule"?"Faustformel 6,6 USG/h":r.cruisePwr+" % = "+f1(F.ffCruise)+" USG/h"}`);
+    const T=[["Position","Grundlage","min","NM","USG","kg"]];
+    const sub=(lab,g,min,nm,usg)=>T.push(["  "+lab,g,min==null?"":f0(min),nm==null?"":f0(nm),f1(usg),kg(usg)]);
+    const bold=(row,fill)=>{ row._st={bold:true,fill:fill||C.light}; T.push(row); };
+    T.push(["Taxi fuel","1 USG","","",f1(F.taxi),kg(F.taxi)]);
+    const L=F.tripLeg, A=F.tripAp;
+    if(L&&L.ok){ sub("Steigflug",`${f0(ap.dep.pa)} > ${f0(L.alt)} ft, 88 KIAS, 92 %`,L.cl.min,L.cl.nm,L.cl.usg); sub("Reiseflug",`TAS ${f0(L.tas)} kt`,L.crMin,L.remNm,L.crUsg); }
+    if(A) sub("Anflug",A.mode==="self"?`${f0(A.dist)} NM, ${f0(A.alt)} ft, TAS ${f0(A.tas)} kt`:(r.ifr?"Standard FBH-B: 2 USG":"VFR"),A.min,A.mode==="self"?A.dist:null,A.usg);
+    bold(["Trip fuel",L&&L.ok?"":"Strecke/Höhe fehlt",f0(r.tripTot),L&&L.ok?f0(L.dist+(A&&A.mode==="self"?A.dist:0)):"",f1(F.trip),kg(F.trip)]);
+    T.push(["Contingency fuel","10 % vom Trip fuel","","",f1(F.cont),kg(F.cont)]);
+    if(r.withAlt){ const M=F.altLeg, B=F.altAp;
+      if(M&&M.ok){ sub("Steigflug",`${f0(ap.dest.pa)} > ${f0(M.alt)} ft`,M.cl.min,M.cl.nm,M.cl.usg); sub("Reiseflug",`TAS ${f0(M.tas)} kt`,M.crMin,M.remNm,M.crUsg); }
+      if(B) sub("Anflug",B.mode==="self"?`${f0(B.dist)} NM, ${f0(B.alt)} ft, TAS ${f0(B.tas)} kt`:(r.ifr?"Standard FBH-B: 2 USG":"VFR"),B.min,B.mode==="self"?B.dist:null,B.usg);
+      if(r.ifr) sub("Warteverfahren",`${F.holdMin} min @ ${F.holdPwr} %`,F.holdMin,null,F.altHold);
+      bold(["Alternate fuel",M&&M.ok?"":"Strecke/Höhe fehlt",f0(r.altTot+(r.ifr?F.holdMin:0)),"",f1(F.alt),kg(F.alt)]);
+    } else T.push(["Additional fuel","No Alternate Required (45 min @ 75 %)","45","",f1(F.add),kg(F.add)]);
+    T.push(["Final reserve fuel","3 USG","","",f1(F.final),kg(F.final)]);
+    bold(["MINIMUM REQUIRED","","","",f1(F.req),kg(F.req)],[220,223,212]);
+    T.push(["Fuel on board","max. 39 USG","","",f1(F.fob),kg(F.fob||0)]);
+    const ex=["Extra fuel","FOB – Minimum","","",f1(F.extra),kg(F.extra||0)]; ex._st={bold:true,color:F.extra<0?C.bad:C.good}; T.push(ex);
+    pg.table([30,50,11,11,13,13],T,{head:true,align:["","","r","r","r","r"],sz:6.1});
+    pg.para(`Dichte ${f1(r.density,3)} kg/l (${f1(r.kgPerUsg,3)} kg/USG) bei OAT Start. Restmenge nach Landung DEST ${f1(F.afterLanding)} USG · Endurance (6,6 USG/h) ${F.endurance!=null?Math.floor(F.endurance/60)+":"+String(Math.round(F.endurance%60)).padStart(2,"0")+" h":"—"}.`,5.8);
   });
-  // 2 MET DEP/DEST
-  pages.push(pg=>{ pg.frame("METAR / TAF"); wx(pg,"dep"); wx(pg,"dest"); });
-  // 3 MET ALTN
-  pages.push(pg=>{ pg.frame(r.withAlt?"METAR / TAF – ALTERNATE":"WETTER – OHNE ALTERNATE");
-    if(r.withAlt) wx(pg,"altn");
-    else { pg.para("Planungsvariante DESTINATION WITHOUT ALTERNATE"+(r.cls?" – Class "+r.cls:"")+": kein Destination Alternate geplant. Statt Alternate fuel wird Additional Fuel No Alternate Required (5 USG) eingerechnet.",7);
-      pg.quote(QUOTE.cls2); }
-    pg.h("Temperaturermittlung");
-    pg.para("Die OAT für Start- und Landestrecke sowie Steiggradient wird je Flugplatz für den Zeitpunkt ETD bzw. ETA aus dem TAF übernommen (TX/TN). Bewertungszeitraum gemäß FBH-B 5.2.2/5.2.3.1: eine Stunde vor bis eine Stunde nach ETA. Gelb hinterlegt: TAF-Gruppen, die in diesen Zeitraum fallen.",6.7);
+  // Seite 2: Wetter
+  pages.push(pg=>{ pg.frame("METAR / TAF");
+    for(const a of ["dep","dest"].concat(r.withAlt?["altn"]:[])){ const o=ap[a]; if(!o) continue;
+      pg.h(`${APNAME[a]} ${o.icao||""} · ${a==="dep"?"ETD":"ETA"} ${hhmm(o.t)}`);
+      pg.mono("METAR "+(o.metar?o.metar.raw:"—"),5.6);
+      pg.mono(o.taf?o.taf.raw:"TAF —",5.6);
+      if(o.rel&&o.rel.length) pg.mono("ETA ±1 h: "+o.rel.map(g=>g.type==="BASE"?"Basis "+g.text:g.text).join(" | "),5.6,true);
+      pg.table([18,40,24,40],[["OAT",o.temp!=null?f1(o.temp)+" °C ("+(o.tsrc||"")+")":"—","QNH / PA",f0(o.qnh)+" hPa / "+(o.pa!=null?f0(o.pa)+" ft":"—")],["Wind",fmtWind(o.wind)+(o.wsrc?" ("+o.wsrc+")":""),rwy(o),o.comp?(o.comp.head>=0?"HW ":"TW ")+f0(Math.abs(o.comp.head))+" kt / XW "+f0(o.comp.cross)+" kt":"—"]],{sz:5.9});
+    }
+    pg.para("Temperatur: Maximum aus dem TAF (TX), sonst aktueller METAR-Wert. Wind und QNH aus dem METAR. Gelb: TAF-Gruppen im Zeitraum ETA ± 1 h (FBH-B 5.2.2 / 5.2.3.1).",5.7);
   });
-  // 4 Fuel
-  pages.push(pg=>{
-    pg.frame("TREIBSTOFFBERECHNUNG");
-    pg.para(`Berechnung gemäß FBH-B 5.3 (${r.ifr?"IFR":"VFR"}). Methode: ${F.method==="rule"?"Faustformel 6,6 USG/h":"FHB-Tabelle 4.4, "+r.cruisePwr+" % = "+f1(F.ffCruise)+" USG/h"+(r.climbMin?" · Steigflug "+f0(r.climbMin)+" min @ 92 % = 8,3 USG/h":"")}.`,6.8);
-    const rows=[["Position","Grundlage","Zeit","USG","kg"]];
-    const kg=v=>f1(v*(r.kgPerUsg||kgPerUsg(15)));
-    rows.push(["Taxi fuel","1 USG","",f1(F.taxi),kg(F.taxi)]);
-    rows.push(["Trip fuel",(r.ifr?"Start bis IAF":"Start bis Landung")+(r.ifr?" + 2 USG Anflug":""),f0(r.eetDest)+" min",f1(F.trip),kg(F.trip)]);
-    rows.push(["Contingency fuel","10 % vom Trip fuel","",f1(F.cont),kg(F.cont)]);
-    if(r.withAlt){
-      rows.push(["Alternate fuel","DEST bis IAF ALTN"+(r.ifr?" + 2 USG Anflug":""),f0(r.eetAltn)+" min",f1(F.altEnroute+F.altAppr),kg(F.altEnroute+F.altAppr)]);
-      if(r.ifr) rows.push(["  Warteverfahren",F.holdMin+" min @ "+F.holdPwr+" % ("+f1(FBH.ff[F.holdPwr])+" USG/h)",F.holdMin+" min",f1(F.altHold),kg(F.altHold)]);
-    } else rows.push(["Additional fuel","No Alternate Required (45 min @ 75 %)","45 min",f1(F.add),kg(F.add)]);
-    rows.push(["Final reserve fuel","3 USG","",f1(F.final),kg(F.final)]);
-    const sum=["MINIMUM REQUIRED","","",f1(F.req),kg(F.req)]; sum._st={bold:true,fill:C.light}; rows.push(sum);
-    rows.push(["Fuel on board","max. 39 USG verfügbar","",f1(F.fob),kg(F.fob||0)]);
-    const ex=["Extra fuel","FOB – Minimum required","",f1(F.extra),kg(F.extra||0)]; ex._st={bold:true,color:F.extra<0?C.bad:C.good}; rows.push(ex);
-    pg.table([30,52,16,16,16],rows,{head:true,align:["","","r","r","r"],sz:6.9});
-    pg.table([60,30,50,30],[["Restmenge nach Landung DEST",f1(F.afterLanding)+" USG","Endurance (6,6 USG/h)",F.endurance!=null?Math.floor(F.endurance/60)+":"+String(Math.round(F.endurance%60)).padStart(2,"0")+" h":"—"]],{sz:6.8});
-    pg.h("FBH-B 5.3 Treibstoffplanung (Auszug)");
-    pg.quote({ref:"5.3 Treibstoffplanung (S. 100)",txt:"Ist der Treibstoffvorrat ausreichend genug, so dass nach der Landung noch 10 US Gal vorhanden sind, kann die Treibstoffplanung mittels Faustformel 6,6 US Gal/h berechnet werden. In allen anderen Fällen ist der genaue Treibstoffverbrauch mittels den Tabellen im FHB oder einer Flugplanungssoftware zu berechnen.\nTaxi fuel 1 USG · Trip fuel VFR: Strecke von Start bis Landung / IFR: Strecke von Start bis zum IAF + 2 USG für Anflug · Alternate fuel wie Trip fuel (IFR: + 30 Minuten für Warteverfahren, 15 Minuten bei Radar oder VMC) · Contingency fuel 10 % vom Trip fuel · Final reserve fuel 3 USG.\nBei vollen Tanks ist mit 39 US Gal verfügbarem Treibstoff zu rechnen.\nDer Final reserve fuel darf in der Planung nicht unterschritten werden. Sollten äußere Umstände erwarten lassen, dass der Final reserve fuel unterschritten wird, so ist gleich eine Notlage zu erklären „MAYDAY“ und „SHORT ON FUEL“ zu melden."});
-  });
-  // 5 W&B
+  // Seite 3: Weight & Balance
   pages.push(pg=>{
     pg.frame("WEIGHT & BALANCE");
-    const rows=[["Position","Arm m","Masse kg","Moment mkg","max kg"]];
-    W.rows.forEach(x=>rows.push([x[0],f1(x[2],3),f1(x[1]),f1(x[3]),x[0]==="FWD Baggage"?"45":x[0]==="AFT Baggage"?"18":""]));
-    const ph=(p,lab)=>{ const row=[lab,f1(p.cg,3),f1(p.m),f1(p.mo),String(p.max)]; row._st={bold:true,fill:C.light,color:(!p.okMass||!p.okCg)?C.bad:null}; return row; };
+    const rows=[["Position","Arm m","Masse kg","Moment mkg"]];
+    W.rows.forEach(x=>rows.push([x[0]+(x[0]==="FWD Baggage"?" (max 45)":x[0]==="AFT Baggage"?" (max 18)":""),f1(x[2],3),f1(x[1]),f1(x[3])]));
+    const ph=(p,lab)=>{ const row=[lab+" (max "+p.max+")",f1(p.cg,3),f1(p.m),f1(p.mo)]; row._st={bold:true,fill:C.light,color:(!p.okMass||!p.okCg)?C.bad:null}; return row; };
     rows.push(ph(W.zfm,"Zero fuel mass"));
-    rows.push(["Fuel on board ("+f1(F.fob)+" USG)","2,630",f1(W.fuelKg.fob),f1(W.fuelKg.fob*2.63),""]);
-    rows.push(["– Taxi fuel","2,630","-"+f1(W.fuelKg.taxi),"-"+f1(W.fuelKg.taxi*2.63),""]);
+    rows.push(["+ Fuel on board ("+f1(F.fob)+" USG)","2,630",f1(W.fuelKg.fob),f1(W.fuelKg.fob*2.63)]);
+    rows.push(["– Taxi fuel","2,630","-"+f1(W.fuelKg.taxi),"-"+f1(W.fuelKg.taxi*2.63)]);
     rows.push(ph(W.tom,"Take off mass"));
-    rows.push(["– Trip fuel","2,630","-"+f1(W.fuelKg.trip),"-"+f1(W.fuelKg.trip*2.63),""]);
+    rows.push(["– Trip fuel","2,630","-"+f1(W.fuelKg.trip),"-"+f1(W.fuelKg.trip*2.63)]);
     rows.push(ph(W.lmDest,"Landing mass DEST"));
-    if(W.lmAltn){ rows.push(["– Alternate fuel (ohne Holding)","2,630","-"+f1(W.fuelKg.alt),"-"+f1(W.fuelKg.alt*2.63),""]); rows.push(ph(W.lmAltn,"Landing mass ALTN")); }
-    pg.table([46,18,22,26,16],rows,{head:true,align:["","r","r","r","r"],sz:6.8});
-    pg.table([46,30,30,30],[["Phase","CG zulässig von","bis","Status"]].concat(W.phases.filter(p=>p!==W.ramp).map(p=>{ const ok=p.okMass&&p.okCg; const row=[p.name,f1(p.fwd,3)+" m",f1(p.aft,3)+" m",ok?"im Bereich":"AUSSERHALB"]; row._st={color:ok?C.good:C.bad}; return row; })),{head:true,sz:6.6});
-    // Diagramm
-    const d=pg.d, x0=pg.m+14, w=pg.W-2*pg.m-20, y0=pg.y+2, h=Math.min(62,pg.H-14-y0-8);
+    if(W.lmAltn){ rows.push(["– Alternate fuel (ohne Holding)","2,630","-"+f1(W.fuelKg.alt),"-"+f1(W.fuelKg.alt*2.63)]); rows.push(ph(W.lmAltn,"Landing mass ALTN")); }
+    pg.table([54,18,22,26],rows,{head:true,align:["","r","r","r"],sz:6.2});
+    pg.table([46,26,26,30],[["Phase","CG vorne","CG hinten","Status"]].concat(W.phases.filter(p=>p!==W.ramp).map(p=>{ const ok=p.okMass&&p.okCg; const row=[p.name,f1(p.fwd,3)+" m",f1(p.aft,3)+" m",ok?"im Bereich":"AUSSERHALB"]; row._st={color:ok?C.good:C.bad}; return row; })),{head:true,sz:6.0});
+    const d=pg.d, x0=pg.m+14, w=pg.W-2*pg.m-20, y0=pg.y+2, h=Math.max(30,Math.min(58,pg.H-14-y0-9));
     const X=c=>pg.X(x0+(c-2.39)/(2.54-2.39)*w), Y=m=>y0+h-(m-920)/(1330-920)*h;
     pg.fill([246,247,243]); d.rect(pg.X(x0),y0,w,h,"F");
-    d.setLineWidth(0.1); pg.stroke([210,210,200]); pg.font(5.5); pg.color(C.grey);
+    d.setLineWidth(0.1); pg.stroke([210,210,200]); pg.font(5.3); pg.color(C.grey);
     [2.40,2.42,2.44,2.46,2.48,2.50,2.52].forEach(c=>{ d.line(X(c),y0,X(c),y0+h); d.text(c.toFixed(2),X(c),y0+h+3,{align:"center"}); });
     [940,1000,1100,1200,1280,1310].forEach(m=>{ d.line(pg.X(x0),Y(m),pg.X(x0+w),Y(m)); d.text(String(m),pg.X(x0-1),Y(m)+1,{align:"right"}); });
     pg.stroke(C.dark); d.setLineWidth(0.6);
@@ -170,53 +158,32 @@ function pdfPages(r){
     const pts=W.phases.filter(p=>p!==W.ramp&&p.cg); const lab={"Zero fuel mass":"ZFM","Take off mass":"TOM","Landing mass DEST":"LM DEST","Landing mass ALTN":"LM ALTN"};
     pg.stroke(C.red); d.setLineWidth(0.3);
     for(let i=0;i<pts.length-1;i++) d.line(X(pts[i].cg),Y(pts[i].m),X(pts[i+1].cg),Y(pts[i+1].m));
-    pts.forEach((p,i)=>{ pg.fill(C.red); d.circle(X(p.cg),Y(p.m),0.9,"F"); pg.color(C.red); pg.font(5.5,"bold"); const lx=pg.X(x0+w*0.62), ly=y0+h*0.55+i*4.2; pg.stroke(C.red); d.setLineWidth(0.1); d.line(X(p.cg)+1,Y(p.m),lx-1,ly-1); d.text(lab[p.name]+"  "+f1(p.m,0)+" kg / "+f1(p.cg,3)+" m",lx,ly); });
-    pg.color(C.grey); pg.font(5.8); d.text("Center of Gravity Position [m]",pg.X(x0+w/2),y0+h+6,{align:"center"}); d.text("Flight Mass [kg]",pg.X(pg.m+2),y0+h/2,{angle:90});
-    pg.y=y0+h+9;
+    pts.forEach((p,i)=>{ pg.fill(C.red); d.circle(X(p.cg),Y(p.m),0.9,"F"); pg.color(C.red); pg.font(5.3,"bold"); const lx=pg.X(x0+w*0.6), ly=y0+h*0.55+i*3.8; pg.stroke(C.red); d.setLineWidth(0.1); d.line(X(p.cg)+1,Y(p.m),lx-1,ly-1); d.text(lab[p.name]+"  "+f1(p.m,0)+" kg / "+f1(p.cg,3)+" m",lx,ly); });
+    pg.color(C.grey); pg.font(5.5); d.text("Center of Gravity Position [m]",pg.X(x0+w/2),y0+h+6,{align:"center"});
+    pg.y=y0+h+8;
   });
-  // 6 Performance
+  // Seite 4: Performance, Hinweise, Unterschriften
   pages.push(pg=>{
     pg.frame("PERFORMANCE");
-    pg.h("Geschwindigkeiten (FBH-B 4.1.2)");
-    const sp=[["","Masse","Tabellenzeile","KIAS"]];
-    sp.push(["VR (flaps T/O)",f0(W.tom.m)+" kg (TOM)",P.vrTo.row?"bis "+P.vrTo.row+" kg":"—",String(P.vrTo.vr??"—")]);
-    sp.push(["VAPP DEST (flaps LDG)",f0(W.lmDest.m)+" kg (LM)",P.vappDest.row?"bis "+P.vappDest.row+" kg":"—",String(P.vappDest.vapp??"—")]);
-    if(P.vappAltn) sp.push(["VAPP ALTN (flaps LDG)",f0(W.lmAltn.m)+" kg (LM)",P.vappAltn.row?"bis "+P.vappAltn.row+" kg":"—",String(P.vappAltn.vapp??"—")]);
-    pg.table([40,34,34,16],sp,{head:true,align:["","","","r"],sz:6.8});
-    pg.h("Start- und Landestrecke (FBH-B 4.2 / 4.5 / 4.6)");
-    const dr=[["","PA / OAT","Rollstrecke","15 m / 50 ft"]];
+    pg.table([42,40,40],[["VR (flaps T/O)",f0(W.tom.m)+" kg (TOM)",(P.vrTo.vr??"—")+" KIAS"],["VAPP DEST (flaps LDG)",f0(W.lmDest.m)+" kg (LM)",(P.vappDest.vapp??"—")+" KIAS"]].concat(P.vappAltn?[["VAPP ALTN (flaps LDG)",f0(W.lmAltn.m)+" kg (LM)",(P.vappAltn.vapp??"—")+" KIAS"]]:[]),{sz:6.1});
+    const dr=[["AFM 5.3.7 / 5.3.12","PA / OAT","Rollstrecke","15 m / 50 ft"]];
     const add=(lab,o,dd)=>{ dr.push([lab,o&&o.pa!=null?f0(o.pa)+" ft / "+f1(o.temp)+" °C":"—",dd&&dd.ok?f0(dd.roll)+" m":"—",dd&&dd.ok?f0(dd.d50)+" m":(dd?dd.note:"—")]); };
     add("Start "+(ap.dep.icao||"DEP"),ap.dep,P.to); add("Landung "+(ap.dest.icao||"DEST"),ap.dest,P.ldDest); if(r.withAlt) add("Landung "+(ap.altn.icao||"ALTN"),ap.altn,P.ldAltn);
     if(P.asd) dr.push(["Startabbruch bei VR","Start- + Landerollstrecke",f0(P.asd)+" m",""]);
-    pg.table([34,36,24,26],dr,{head:true,align:["","","r","r"],sz:6.8});
-    const st=(lab,dd)=>{ if(dd&&dd.ok) pg.para(lab+": "+dd.steps.map(s=>s[0]+" "+f0(s[1])+"/"+f0(s[2])+" m").join("  >  ")+(dd.note?" · "+dd.note:""),5.9); };
-    st("Start",P.to); st("Landung DEST",P.ldDest); if(r.withAlt) st("Landung ALTN",P.ldAltn);
-    pg.para("Start-/Landestrecken aus AFM-Tabellen (Kap. 5.3.7/5.3.12), interpoliert nach Masse. Zuschläge nacheinander angewendet; Wind auf Roll- und Gesamtstrecke, Neigung/Belag auf die Rollstrecke."+(r.fairingsOff?" Ohne Radverkleidungen: +20 m / +30 m (Start), Steigrate -20/-40 ft/min.":""),5.9);
-    const gt=(title,arr)=>{ pg.h(title); const rows=[["Verfahren","ROC","TAS / GS","Gradient","gefordert"]];
-      arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label,f0(g.roc)+" ft/min",f0(g.tas)+" / "+f0(g.gs)+" kt",f1(g.grad)+" % / "+f0(g.ftnm)+" ft/NM",f1(g.req)+" % = "+f0(g.rocReq)+" ft/min"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
-      if(arr.length===0) rows.push(["Daten fehlen","","","",""]);
-      pg.table([46,20,22,16,28],rows,{head:true,align:["","r","r","r","r"],sz:6.5}); };
-    gt(`Steiggradient Abflug ${ap.dep.icao||""} (TOM ${f0(W.tom.m)} kg)`,P.climbDep);
-    gt(`Steiggradient Durchstarten ${ap.dest.icao||""} (LM ${f0(W.lmDest.m)} kg)`,P.climbGA);
-    pg.para("Gradient [%] = ROC [ft/min] x 0,98 / GS [kt] (FBH-B 4.3). GS = TAS + Rückenwind, Gegenwind nicht angerechnet (ungünstigste Variante). Für das Instrumentenabflugverfahren ist grundsätzlich der Cruise Climb zu verwenden; wird der Mindeststeiggradient damit nicht erreicht, ist der Take-off Climb anzuwenden (LB 2113, Kap. 1.5).",5.9);
-  });
-  // 7 FBH Bestimmungen
-  pages.push(pg=>{
-    pg.frame(r.withAlt?"DESTINATION WITH ALTERNATE":"DESTINATION WITHOUT ALTERNATE");
-    pg.para("Bestimmungen gemäß FBH-B D40, Kapitel 5.2 Instrumentenflug (wörtlich zitiert):",6.8,"bold");
-    quotesFor(r.withAlt).forEach(q=>pg.quote(q));
-  });
-  // 8 Rückseite
-  pages.push(pg=>{
-    pg.frame("BESTÄTIGUNG");
-    pg.h("Bemerkungen");
-    pg.d.setLineWidth(0.15); pg.stroke(C.line); for(let i=0;i<8;i++){ pg.d.line(pg.X(pg.m),pg.y+6+i*7,pg.X(pg.W-pg.m),pg.y+6+i*7); } pg.y+=8*7+6;
-    pg.h("Unterschriften");
-    pg.table([50,50,50],[["Verantwortlicher Pilot (PIC)","Fluglehrer / Flugauftragserteilender","Datum / Uhrzeit"]],{head:true,sz:6.8,zebra:false});
-    { const w3=(pg.W-2*pg.m)/3; pg.stroke(C.line); pg.d.setLineWidth(0.2); for(let i=0;i<3;i++) pg.d.rect(pg.X(pg.m+i*w3),pg.y-2,w3,18); pg.y+=19; }
-    pg.h("Datengrundlage");
-    pg.para(`Rechengrundlage: ${FBH.stand} – Kap. 1.8/1.13 (Grenzwerte), 4.1.2 (VR/VAPP), 4.2 (Startstrecke), 4.3 (Steiggradient), 4.4 (Treibstoffverbrauch), 4.5 (Landestrecke), 4.6 (Zuschläge), 5.2 (Ausweichflugplatzplanung), 5.3 (Treibstoffplanung), 6.1 (Weight & Balance). Basisleermassen gemäß Weight and Balance Sheet V1. Wetter: aviationweather.gov (METAR/TAF), Stand der Eingabe. Druckhöhe = Platzhöhe + (1013,25 – QNH) x 27 ft. Erstellt: ${new Date().toISOString().slice(0,16).replace("T"," ")} UTC.`,6.3);
-    pg.para("Das Planungswerkzeug ersetzt nicht die Prüfung durch den verantwortlichen Piloten. Maßgeblich sind FHB/AFM und FBH-B in der gültigen Fassung sowie das offizielle Flugwetter-Briefing.",6.3,"bold");
+    pg.table([36,36,24,26],dr,{head:true,align:["","","r","r"],sz:6.1});
+    const gt=(title,arr)=>{ const rows=[[title,"ROC","GS","Gradient","gefordert"]];
+      arr.forEach(g=>{ if(g.grad==null){ rows.push([g.label,g.note,"","",""]); return; } const row=[g.label.replace(/ \(.*\)/,""),f0(g.roc)+" ft/min",f0(g.gs)+" kt",f1(g.grad)+" % / "+f0(g.ftnm)+" ft/NM",f1(g.req)+" %"]; row._st={color:g.ok?C.good:C.bad}; rows.push(row); });
+      pg.table([40,20,14,34,16],rows,{head:true,align:["","r","r","r","r"],sz:6.0}); };
+    gt(`Abflug ${ap.dep.icao||""} (TOM)`,P.climbDep);
+    gt(`Durchstarten ${ap.dest.icao||""} (LM)`,P.climbGA);
+    pg.para("Gradient = ROC x 0,98 / GS (AFM 5.3.8 / FBH-B 4.3), GS = TAS + Rückenwind.",5.6);
+    pg.h(`Hinweise (${r.warn.length})`);
+    if(!r.warn.length) pg.para("Keine Grenzwertüberschreitung erkannt.",6);
+    else { pg.color(C.bad); r.warn.slice(0,7).forEach(w=>pg.para("• "+w,5.7)); if(r.warn.length>7) pg.para(`… und ${r.warn.length-7} weitere (siehe App).`,5.6); }
+    pg.y=Math.max(pg.y,pg.H-38);
+    pg.table([50,50,50],[["Verantwortlicher Pilot (PIC)","Fluglehrer / Flugauftragserteilender","Datum / Uhrzeit"]],{head:true,sz:6.0,zebra:false});
+    { const w3=(pg.W-2*pg.m)/3; pg.stroke(C.line); pg.d.setLineWidth(0.2); for(let i=0;i<3;i++) pg.d.rect(pg.X(pg.m+i*w3),pg.y-2,w3,13); pg.y+=13; }
+    pg.para(`Grundlage: AFM DA 40 NG Rev 4, ${FBH.stand}. Erstellt ${new Date().toISOString().slice(0,16).replace("T"," ")} UTC. Ersetzt nicht die Prüfung durch den verantwortlichen Piloten.`,5.3);
   });
   return pages;
 }

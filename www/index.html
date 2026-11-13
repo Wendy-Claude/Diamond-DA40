@@ -40,7 +40,6 @@
     <label>Zielflugplatz (ICAO)<input id="dest" data-k maxlength="4" placeholder="LOWS" style="text-transform:uppercase"></label>
     <label class="altonly">Alternate (ICAO)<input id="altn" data-k maxlength="4" placeholder="LOWW" style="text-transform:uppercase"></label>
     <label>ETD (UTC, hhmm)<input id="etd" data-k inputmode="numeric" placeholder="0900" value="0900"></label>
-    <label>Anflug IAF → Landung (min, für ETA)<input id="apprMin" data-k inputmode="decimal" value="15"></label>
   </div>
   <div class="row" style="margin-top:8px"><button type="button" class="btn s o" id="btnAc">Flugzeuge / Leermassen bearbeiten</button></div>
   <div class="note" id="etaOut"></div>
@@ -128,7 +127,9 @@
    <tr><td>TAS manuell <small>(optional)</small></td><td><input id="tasTrip" data-k inputmode="decimal" placeholder="kt"></td><td></td><td></td><td></td></tr>
    <tr><td>Steigflug<br><small>88 KIAS · 92 %</small></td><td id="tClInfo" class="small"></td><td class="n" id="tClMin"></td><td class="n" id="tClNm"></td><td class="n" id="tClF"></td></tr>
    <tr><td>Reiseflug<br><small>Reststrecke</small></td><td id="tCrInfo" class="small"></td><td class="n" id="tCrMin"></td><td class="n" id="tCrNm"></td><td class="n" id="tCrF"></td></tr>
-   <tr><td>Anflug</td><td id="tApInfo" class="small"></td><td></td><td></td><td class="n" id="tAp"></td></tr>
+   <tr><td>Anflug<br><small>IAF → Touchdown</small></td><td><select id="apModeTrip" data-k><option value="fbh" selected>Standard gem. FBH-B</option><option value="self">Selbst eingeben</option></select><div id="tApInfo" class="small"></div></td><td class="n" id="tApMin"></td><td class="n" id="tApNm"></td><td class="n" id="tAp"></td></tr>
+   <tr class="apself" data-for="Trip" style="display:none"><td>Anflug: Distanz IAF → TD</td><td><input id="apDistTrip" data-k inputmode="decimal" placeholder="NM"></td><td></td><td></td><td></td></tr>
+   <tr class="apself" data-for="Trip" style="display:none"><td>Anflug: Höhe am IAF</td><td><input id="apAltTrip" data-k placeholder="ft"></td><td></td><td></td><td></td></tr>
    <tr><td>Contingency</td><td class="small">10 % vom Trip fuel</td><td></td><td></td><td class="n" id="tCont"></td></tr>
    <tr class="sum"><td>TRIP FUEL</td><td></td><td class="n" id="tTotMin"></td><td class="n" id="tTotNm"></td><td class="n" id="tTotF"></td></tr>
   </tbody></table>
@@ -139,7 +140,9 @@
    <tr><td>TAS manuell <small>(optional)</small></td><td><input id="tasAlt" data-k inputmode="decimal" placeholder="kt"></td><td></td><td></td><td></td></tr>
    <tr><td>Steigflug<br><small>88 KIAS · 92 %</small></td><td id="aClInfo" class="small"></td><td class="n" id="aClMin"></td><td class="n" id="aClNm"></td><td class="n" id="aClF"></td></tr>
    <tr><td>Reiseflug<br><small>Reststrecke</small></td><td id="aCrInfo" class="small"></td><td class="n" id="aCrMin"></td><td class="n" id="aCrNm"></td><td class="n" id="aCrF"></td></tr>
-   <tr><td>Anflug</td><td id="aApInfo" class="small"></td><td></td><td></td><td class="n" id="aAp"></td></tr>
+   <tr><td>Anflug<br><small>IAF → Touchdown</small></td><td><select id="apModeAlt" data-k><option value="fbh" selected>Standard gem. FBH-B</option><option value="self">Selbst eingeben</option></select><div id="aApInfo" class="small"></div></td><td class="n" id="aApMin"></td><td class="n" id="aApNm"></td><td class="n" id="aAp"></td></tr>
+   <tr class="apself" data-for="Alt" style="display:none"><td>Anflug: Distanz IAF → TD</td><td><input id="apDistAlt" data-k inputmode="decimal" placeholder="NM"></td><td></td><td></td><td></td></tr>
+   <tr class="apself" data-for="Alt" style="display:none"><td>Anflug: Höhe am IAF</td><td><input id="apAltAlt" data-k placeholder="ft"></td><td></td><td></td><td></td></tr>
    <tr class="altonly"><td>Warteverfahren</td><td id="aHoldInfo" class="small"></td><td class="n" id="aHoldMin"></td><td></td><td class="n" id="aHoldF"></td></tr>
    <tr class="sum"><td>ALTERNATE FUEL</td><td></td><td class="n" id="aTotMin"></td><td class="n" id="aTotNm"></td><td class="n" id="aTotF"></td></tr>
   </tbody></table>
@@ -197,8 +200,7 @@
 <section>
   <h2>PDF</h2>
   <div class="row">
-    <button class="btn r" id="btnBooklet">Vorschau Broschüre (A4)</button>
-    <button class="btn o" id="btnA5">Vorschau A5-Seiten</button>
+    <button class="btn r" id="btnBooklet">PDF-Vorschau (A5-Broschüre, 4 Seiten)</button>
     <button class="btn o" id="btnAp">Flugplatzdaten</button>
   </div>
   <div class="note" id="pdfStatus">Die Vorschau öffnet sich in einem Fenster. Von dort speicherst oder teilst du das PDF.</div>
