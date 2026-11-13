@@ -45,4 +45,9 @@ assert.equal(C.climbToAlt(1310,0,15,17000).ok,false);
 near(C.cruiseTas(6000,C.isaTemp(6000),75),129,0.6); near(C.cruiseTas(10000,C.isaTemp(10000)+10,60),121,0.6);
 near(C.cruiseTas(4000,C.isaTemp(4000),67.5),(114+127)/2,0.6);
 assert.equal(C.cruiseTas(4000,10,95),null);
+// Flugplatzhoehen AIP Austria
+const AP=require("../www/js/airports-at.js");
+assert.equal(Object.keys(AP.AIRPORTS_AT).length,55);
+assert.equal(AP.AIRPORTS_AT.LOWW[1],600); assert.equal(AP.AIRPORTS_AT.LOXZ[1],2264); assert.equal(AP.AIRPORTS_AT.LOXT[0],"Tulln");
+for(const [k,v] of Object.entries(AP.AIRPORTS_AT)) assert.ok(v[1]>300&&v[1]<4000,k+" Hoehe "+v[1]);
 console.log("core OK");

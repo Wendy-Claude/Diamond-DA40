@@ -104,12 +104,12 @@ function pdfPages(r){
     T.push(["Taxi fuel","1 USG","","",f1(F.taxi),kg(F.taxi)]);
     const L=F.tripLeg, A=F.tripAp;
     if(L&&L.ok){ sub("Steigflug",`${f0(ap.dep.pa)} > ${f0(L.alt)} ft, 88 KIAS, 92 %`,L.cl.min,L.cl.nm,L.cl.usg); sub("Reiseflug",`TAS ${f0(L.tas)} kt`,L.crMin,L.remNm,L.crUsg); }
-    if(A) sub("Anflug",A.mode==="self"?`${f0(A.dist)} NM, ${f0(A.alt)} ft, TAS ${f0(A.tas)} kt`:(r.ifr?"Standard FBH-B: 2 USG":"VFR"),A.min,A.mode==="self"?A.dist:null,A.usg);
+    if(A) sub("Anflug",A.mode==="self"?`${f0(A.dist)} NM, ${f0(A.alt)} ft, TAS ${f0(A.tas)} kt`:(r.ifr?"Standard FBH-B: 2 USG = 20 min":"VFR"),A.min,A.mode==="self"?A.dist:null,A.usg);
     bold(["Trip fuel",L&&L.ok?"":"Strecke/Höhe fehlt",f0(r.tripTot),L&&L.ok?f0(L.dist+(A&&A.mode==="self"?A.dist:0)):"",f1(F.trip),kg(F.trip)]);
     T.push(["Contingency fuel","10 % vom Trip fuel","","",f1(F.cont),kg(F.cont)]);
     if(r.withAlt){ const M=F.altLeg, B=F.altAp;
       if(M&&M.ok){ sub("Steigflug",`${f0(ap.dest.pa)} > ${f0(M.alt)} ft`,M.cl.min,M.cl.nm,M.cl.usg); sub("Reiseflug",`TAS ${f0(M.tas)} kt`,M.crMin,M.remNm,M.crUsg); }
-      if(B) sub("Anflug",B.mode==="self"?`${f0(B.dist)} NM, ${f0(B.alt)} ft, TAS ${f0(B.tas)} kt`:(r.ifr?"Standard FBH-B: 2 USG":"VFR"),B.min,B.mode==="self"?B.dist:null,B.usg);
+      if(B) sub("Anflug",B.mode==="self"?`${f0(B.dist)} NM, ${f0(B.alt)} ft, TAS ${f0(B.tas)} kt`:(r.ifr?"Standard FBH-B: 2 USG = 20 min":"VFR"),B.min,B.mode==="self"?B.dist:null,B.usg);
       if(r.ifr) sub("Warteverfahren",`${F.holdMin} min @ ${F.holdPwr} %`,F.holdMin,null,F.altHold);
       bold(["Alternate fuel",M&&M.ok?"":"Strecke/Höhe fehlt",f0(r.altTot+(r.ifr?F.holdMin:0)),"",f1(F.alt),kg(F.alt)]);
     } else T.push(["Additional fuel","No Alternate Required (45 min @ 75 %)","45","",f1(F.add),kg(F.add)]);

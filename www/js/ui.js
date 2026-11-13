@@ -136,10 +136,10 @@ function compute(guess){
     o.crMin=o.remNm/o.tas*60; o.crUsg=o.crMin/60*F.ffCruise; o.min=cl.min+o.crMin; o.usg=cl.usg+o.crUsg; o.ok=true;
     return o;
   };
-  /* Anflug IAF -> Touchdown: Standard FBH-B (IFR 2 USG, Zeit = 2 USG / 6,6 USG/h) oder selbst: Distanz + Hoehe am IAF, Zeit mit TAS */
+  /* Anflug IAF -> Touchdown: Standard FBH-B (IFR 2 USG = 20 min) oder selbst: Distanz + Hoehe am IAF, Zeit mit TAS */
   const approach=(pre,ap)=>{
     const mode=val("apMode"+pre)==="self"?"self":"fbh";
-    if(mode==="fbh") return {mode,ok:true,usg:ifr?2:0,min:ifr?2/6.6*60:0};
+    if(mode==="fbh") return {mode,ok:true,usg:ifr?2:0,min:ifr?20:0};
     const dist=num("apDist"+pre), alt=parseAlt(val("apAlt"+pre));
     if(!dist||alt==null) return {mode,ok:false,usg:0,min:0,note:"Anflug: Distanz und Höhe am IAF eingeben"};
     const dev=ap&&ap.temp!=null&&ap.pa!=null?ap.temp-isaTemp(ap.pa):0;
@@ -277,7 +277,7 @@ function render(){
     setT(p+"TotNm",ok?f0(L.dist):"");
   };
   const apOut=(p,pre,A)=>{ const self=A&&A.mode==="self"; document.querySelectorAll(`tr.apself[data-for="${pre}"]`).forEach(tr=>tr.style.display=self?"":"none");
-    setT(p+"ApInfo",!A?"":self?(A.ok?`TAS ${f0(A.tas)} kt · ${f1(F.ffCruise)} USG/h`:A.note):(r.ifr?"2 USG (FBH-B 5.3), Zeit = 2 USG ÷ 6,6 USG/h":"VFR: kein Zuschlag"));
+    setT(p+"ApInfo",!A?"":self?(A.ok?`TAS ${f0(A.tas)} kt · ${f1(F.ffCruise)} USG/h`:A.note):(r.ifr?"2 USG (FBH-B 5.3) = 20 min":"VFR: kein Zuschlag"));
     setT(p+"ApMin",A&&A.min?f0(A.min):""); setT(p+"ApNm",self&&A.ok?f0(A.dist):""); setT(p+"Ap",A?f1(A.usg):""); };
   legOut("t",F.tripLeg,r.ap.dep); apOut("t","Trip",F.tripAp); setT("tTotMin",f0(r.tripTot)); setT("tCont",f1(F.cont)); setT("tTotF",f1(F.trip+0));
   if(r.withAlt){ legOut("a",F.altLeg,r.ap.dest); apOut("a","Alt",F.altAp); setT("aTotMin",f0(r.altTot+(r.ifr?F.holdMin:0)));
