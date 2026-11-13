@@ -48,11 +48,17 @@
 <section>
   <h2>Planungsvariante</h2>
   <div class="plan">
-    <span class="muted" style="font-size:12px">WITHOUT</span>
-    <label class="sw" aria-label="Planungsvariante"><input type="checkbox" id="withAlt" data-k checked><span></span></label>
-    <span class="muted" style="font-size:12px">WITH</span>
-    <span id="planLabel"></span>
-    <label class="noaltonly" style="flex-direction:row;align-items:center;gap:6px">Class<select id="cls" data-k style="width:auto"><option>II</option><option>I</option></select></label>
+    <div class="planrow">
+      <span class="pside" id="pWith">MIT ALTERNATE</span>
+      <label class="sw inv" aria-label="Destination with oder without Alternate"><input type="checkbox" id="withAlt" data-k checked><span></span></label>
+      <span class="pside" id="pWithout">OHNE ALTERNATE</span>
+    </div>
+    <div class="planrow" id="clsRow">
+      <span class="pside" id="pCls2">CLASS II</span>
+      <label class="sw" aria-label="Class II oder Class I"><input type="checkbox" id="clsI" data-k><span></span></label>
+      <span class="pside" id="pCls1">CLASS I</span>
+    </div>
+    <div id="planLabel"></div>
   </div>
   <div id="quotes"></div>
 </section>

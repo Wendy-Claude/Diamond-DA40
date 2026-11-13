@@ -20,8 +20,8 @@ const QUOTE = {
   cls2: {ref:"5.2.3.4 Destination without Alternate Class II (S. 97–98)", txt:"Diese Planungsvariante ist nur nach gesonderter Beurteilung durch den Flugauftragserteilenden erlaubt.\nWetterbedingungen von Start bis ETA + 1h mindestens:\n• Tag: 1,5 km Sicht, 600 ft ceiling\n• Nacht: 3,5 km Sicht, 1.200 ft ceiling\nNotwendige Bedingungen:\n• Flugplatz ist verfügbar und verfügt über 2 unabhängige Landemöglichkeiten\n• auf der voraussichtlichen Betriebspiste sind 2 voneinander unabhängige IFR-Anflugverfahren plan- und verfügbar, oder\n• ein Visual Approach bzw. VFR Anflug aus der MHA/MRVA ist möglich.\nFür weitere Details siehe FBH-A Kapitel 9.3.4.2 (EINGESCHRÄNKT)."},
   addFuel: {ref:"5.3 Treibstoffplanung (S. 100)", txt:"Additional Fuel No Alternate Required: 5 USG (= 45 Min mit 75 % PWR)"}
 };
-function quotesFor(withAlt){
-  return withAlt ? [QUOTE.dest,QUOTE.altGen,QUOTE.withAlt,QUOTE.suitable] : [QUOTE.dest,QUOTE.altGen,QUOTE.cls1,QUOTE.cls1chart,QUOTE.cls2,QUOTE.addFuel];
+function quotesFor(withAlt,cls){
+  return withAlt ? [QUOTE.withAlt] : cls==="I" ? [QUOTE.cls1,QUOTE.cls1chart] : [QUOTE.cls2];
 }
 
 /* ---------- Zeiten ---------- */
@@ -38,7 +38,7 @@ const hhmm=d=>d?String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()
 function compute(guess){
   guess=guess||{d:60,a:30,n:0};
   const r={warn:[]};
-  const withAlt=val("withAlt"); r.withAlt=withAlt;
+  const withAlt=val("withAlt"); r.withAlt=withAlt; r.cls=withAlt?null:(val("clsI")?"I":"II");
   const ifr=val("rules")==="IFR"; r.ifr=ifr;
   r.etd=etdDate();
   const eetD=guess.d, eetA=guess.a, appr=0;
@@ -257,8 +257,11 @@ function tafHtml(o){
 function render(){
   const r=R=compute();
   document.body.classList.toggle("noalt",!r.withAlt);
-  $("planLabel").textContent=r.withAlt?"DESTINATION WITH DESTINATION ALTERNATE":"DESTINATION WITHOUT ALTERNATE";
-  $("quotes").innerHTML=quotesFor(r.withAlt).map(q=>`<blockquote><div class="qref">FBH-B D40 · ${esc(q.ref)}</div>${esc(q.txt).replace(/\n/g,"<br>")}</blockquote>`).join("");
+  $("planLabel").textContent=r.withAlt?"DESTINATION WITH DESTINATION ALTERNATE":"DESTINATION WITHOUT ALTERNATE – CLASS "+r.cls;
+  $("clsRow").classList.toggle("off",r.withAlt); $("clsI").disabled=r.withAlt;
+  $("pWith").classList.toggle("on",r.withAlt); $("pWithout").classList.toggle("on",!r.withAlt);
+  $("pCls2").classList.toggle("on",r.cls==="II"); $("pCls1").classList.toggle("on",r.cls==="I");
+  $("quotes").innerHTML=quotesFor(r.withAlt,r.cls).map(q=>`<blockquote><div class="qref">FBH-B D40 · ${esc(q.ref)}</div>${esc(q.txt).replace(/\n/g,"<br>")}</blockquote>`).join("");
   $("etaOut").innerHTML=`ETD ${hhmm(r.etd)} · ETA DEST ${hhmm(r.etaDest)}${r.withAlt?" · ETA ALTN "+hhmm(r.etaAltn):""}`;
   for(const a of APS){
     const o=r.ap[a]; const box=$(a+"Out"); if(!box) continue;

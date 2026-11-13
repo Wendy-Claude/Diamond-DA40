@@ -87,3 +87,11 @@ table.fuel input{width:100%;min-width:70px}table.fuel td{vertical-align:middle}t
 .profile .phandle{cursor:ns-resize}.profile .phandle circle{fill:#fff;stroke:var(--red);stroke-width:2}.profile .phandle text{font-size:12px;fill:var(--red);font-weight:700;pointer-events:none}
 .profile .palt{font-size:10px;font-weight:700;fill:var(--red)}.profile .pdist{font-size:9.5px;fill:var(--olive);cursor:pointer;text-decoration:underline}
 .profile .pbh{font-size:9.5px;font-weight:700;fill:var(--dark)}.profile .pb{font-size:9.5px;fill:var(--ink)}
+
+.plan{flex-direction:column;align-items:stretch;gap:8px}
+.planrow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
+.planrow .pside{font-size:12px;font-weight:700;color:#b3b8a8;letter-spacing:.02em;flex:1}.planrow .pside:first-child{text-align:right}
+.planrow .pside.on{color:var(--red)}
+.sw.inv input:checked+span{background:var(--olive)}.sw.inv input:checked+span::before{transform:none}.sw.inv input:not(:checked)+span{background:var(--red)}.sw.inv input:not(:checked)+span::before{transform:translateX(30px)}
+#clsRow.off{opacity:.35;pointer-events:none}
+#planLabel{font-weight:700;letter-spacing:.02em;color:var(--dark);text-align:center}

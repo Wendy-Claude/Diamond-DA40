@@ -203,7 +203,7 @@ async function makePdf(mode){
   const r={...R};
   r.cs=val("cs"); r.reg=val("reg"); r.dofTxt=val("dof")?val("dof").split("-").reverse().join("."):"—";
   r.cruisePwr=val("cruisePwr"); r.climbMin=0;
-  r.fairingsOff=val("fairingsOff"); r.cls=r.withAlt?null:val("cls");
+  r.fairingsOff=val("fairingsOff"); r.cls=r.withAlt?null:(val("clsI")?"I":"II");
   const pages=pdfPages(r); const N=pages.length;
   const {jsPDF}=window.jspdf; let doc;
   if(mode==="a5"){
