@@ -2,17 +2,27 @@
 const CapG = window.Capacitor;
 const isNative = () => !!(CapG && CapG.isNativePlatform && CapG.isNativePlatform());
 function blobToBase64(blob){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1]); fr.onerror = rej; fr.readAsDataURL(blob); }); }
+/* Native Aufrufe ueber die Capacitor-Bruecke (ohne @capacitor/core: nativePromise statt registerPlugin) */
+const nat = (plugin, method, opts) => CapG.nativePromise(plugin, method, opts);
+async function nativeWrite(name, blob){ const r = await nat("Filesystem", "writeFile", {path: name, data: await blobToBase64(blob), directory: "CACHE"}); return r.uri; }
+const asBlob = (data, mime) => data instanceof Blob ? data : new Blob([data], {type: mime || "application/octet-stream"});
+/** Speichern/Teilen: Android -> Teilen-Menue (Drive, Dateien, Mail ...), Browser -> Download */
 async function saveFile(name, data, mime){
-  const blob = data instanceof Blob ? data : new Blob([data], {type: mime || "application/octet-stream"});
+  const blob = asBlob(data, mime);
   if (isNative()) {
-    try {
-      const FS = CapG.registerPlugin("Filesystem"), SH = CapG.registerPlugin("Share");
-      const w = await FS.writeFile({path: name, data: await blobToBase64(blob), directory: "CACHE"});
-      await SH.share({title: name, url: w.uri, dialogTitle: "Speichern oder teilen"});
-      return true;
-    } catch (e) { if (/cancel/i.test(String(e && (e.message || e)))) return true; console.error(e); return false; }
+    try { const uri = await nativeWrite(name, blob); await nat("Share", "share", {title: name, url: uri, dialogTitle: "Speichern oder teilen"}); return true; }
+    catch (e) { if (/cancel/i.test(String(e && (e.message || e)))) return true; console.error(e); alert("Speichern nicht möglich: " + (e && (e.message || e))); return false; }
   }
   try { const u = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 5000); return true; } catch (e) { return false; }
+}
+/** Oeffnen (zum Drucken): Android -> PDF-Anzeige des Systems, Browser -> neuer Tab mit PDF-Viewer */
+async function openFile(name, data, mime){
+  const blob = asBlob(data, mime);
+  if (isNative()) {
+    try { const uri = await nativeWrite(name, blob); await nat("FileOpener", "open", {filePath: uri, contentType: mime || "application/pdf", openWithDefault: true}); return true; }
+    catch (e) { console.error(e); alert("Öffnen nicht möglich (keine PDF-App?): " + (e && (e.message || e))); return false; }
+  }
+  const u = URL.createObjectURL(blob); const w = window.open(u, "_blank"); if (!w) { const a = document.createElement("a"); a.href = u; a.target = "_blank"; document.body.appendChild(a); a.click(); a.remove(); } return true;
 }
 /** PDF-Vorschau (pdf.js) mit Speichern-Knopf */
 async function showPdfPreview(blob, name, hint){
@@ -20,6 +30,7 @@ async function showPdfPreview(blob, name, hint){
   box.innerHTML = '<div class="note">Vorschau wird erstellt …</div>'; dlg.showModal();
   document.getElementById("pdfHint").textContent = hint || "";
   document.getElementById("pdfSave").onclick = async () => { const ok = await saveFile(name, blob, "application/pdf"); document.getElementById("pdfHint").textContent = ok ? "Gespeichert bzw. geteilt." : "Speichern nicht möglich."; };
+  document.getElementById("pdfOpen").onclick = async () => { const ok = await openFile(name, blob, "application/pdf"); document.getElementById("pdfHint").textContent = ok ? "PDF geöffnet – dort über das Menü drucken." : "Öffnen nicht möglich."; };
   document.getElementById("pdfClose").onclick = () => dlg.close();
   try {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";

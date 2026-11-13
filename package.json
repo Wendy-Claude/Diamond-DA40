@@ -9,6 +9,7 @@
     "test": "node test/afm-data.test.js && node test/core.test.js"
   },
   "dependencies": {
+    "@capacitor-community/file-opener": "^8.0.1",
     "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/filesystem": "^8.1.5",

@@ -346,21 +346,45 @@ function save(){ try{ const o={}; FIELDS().forEach(e=>o[e.id]=e.type==="checkbox
 function load(){ try{ const o=JSON.parse(localStorage.getItem("d40fpp")||"null"); if(!o) return false; FIELDS().forEach(e=>{ if(e.id in o){ if(e.type==="checkbox") e.checked=o[e.id]; else e.value=o[e.id]; } }); return true; }catch(e){ return false; } }
 
 /* ---------- Wetter laden ---------- */
-async function fetchWx(a){
+async function fetchWx(a,quiet){
   const icao=(val(a)||"").toUpperCase().trim(); const st=$(a+"Wx");
-  if(!/^[A-Z]{4}$/.test(icao)){ st.textContent="ICAO-Code eingeben."; return; }
+  if(!/^[A-Z]{4}$/.test(icao)){ if(!quiet) st.textContent="ICAO-Code eingeben."; return false; }
   st.textContent="lade …";
   try{
     const base="https://aviationweather.gov/api/data/";
-    const [m,t]=await Promise.all([fetch(base+"metar?ids="+icao+"&format=raw&hours=2").then(x=>x.text()),fetch(base+"taf?ids="+icao+"&format=raw").then(x=>x.text())]);
+    const [m,t]=await Promise.all([fetch(base+"metar?ids="+icao+"&format=raw&hours=2").then(x=>{ if(!x.ok) throw new Error(x.status); return x.text(); }),fetch(base+"taf?ids="+icao+"&format=raw").then(x=>{ if(!x.ok) throw new Error(x.status); return x.text(); })]);
     const mLine=(m||"").trim().split("\n")[0]||"";
     if(mLine) $(a+"Metar").value=mLine;
     if((t||"").trim()) $(a+"Taf").value=t.trim().replace(/\s+/g," ");
     st.textContent=mLine||t?"geladen "+new Date().toISOString().slice(11,16)+"Z":"keine Daten für "+icao;
-    render();
+    render(); return true;
   }catch(e){
-    st.innerHTML=`Live-Abruf in dieser Ansicht gesperrt. METAR/TAF auf <a href="https://aviationweather.gov/data/metar/?ids=${icao}&taf=1&hours=1" target="_blank" rel="noopener">aviationweather.gov</a> öffnen und Text hier einfügen – oder die Offline-Version verwenden.`;
+    st.innerHTML='Direkter Abruf gesperrt (Browser). Über „Wetter einfügen“ übernehmen.';
+    return false;
   }
+}
+/** Text von aviationweather.gov (METAR + TAF, mehrere Plaetze) den Plaetzen zuordnen */
+function importWx(txt){
+  const lines=String(txt||"").replace(/\r/g,"").split("\n"); const blocks=[]; let cur=null;
+  for(const raw of lines){ const l=raw.trim(); if(!l) continue;
+    const m=/^(METAR|SPECI|TAF)(?:\s+(?:AMD|COR|RTD))?\s+([A-Z]{4})\b/.exec(l) || (/^([A-Z]{4})\s+\d{6}Z/.test(l)?[l,"METAR",l.slice(0,4)]:null);
+    if(m){ cur={type:m[1]==="TAF"?"TAF":"METAR",icao:m[2],text:l}; blocks.push(cur); }
+    else if(cur&&cur.type==="TAF") cur.text+=" "+l; }
+  const done=[];
+  for(const a of APS){ const icao=(val(a)||"").toUpperCase(); if(!icao) continue;
+    const met=blocks.find(x=>x.icao===icao&&x.type==="METAR"), taf=blocks.find(x=>x.icao===icao&&x.type==="TAF");
+    if(met){ $(a+"Metar").value=met.text.replace(/^(METAR|SPECI)\s+/,""); }
+    if(taf){ $(a+"Taf").value=taf.text.replace(/\s+/g," "); }
+    if(met||taf){ done.push(icao+(met?" METAR":"")+(taf?" TAF":"")); $(a+"Wx").textContent="eingefügt "+new Date().toISOString().slice(11,16)+"Z"; } }
+  render(); return done;
+}
+function wxAllUrl(){ const ids=APS.map(a=>(val(a)||"").toUpperCase()).filter(x=>/^[A-Z]{4}$/.test(x)); return "https://aviationweather.gov/api/data/metar?ids="+ids.join(",")+"&format=raw&taf=true&hours=1"; }
+function initWxImport(){
+  const dlg=$("wxDlg");
+  const open=()=>{ $("wxOpenLink").href=wxAllUrl(); $("wxPasteMsg").textContent=""; dlg.showModal(); };
+  $("wxPasteBtn").onclick=open; $("wxClose").onclick=()=>dlg.close();
+  $("wxApply").onclick=()=>{ const d=importWx($("wxPaste").value); $("wxPasteMsg").textContent=d.length?"Übernommen: "+d.join(" · "):"Keine Meldung für die eingetragenen Plätze gefunden."; if(d.length) setTimeout(()=>dlg.close(),900); };
+  $("wxAll").onclick=async()=>{ let ok=true; for(const a of APS){ if(a==="altn"&&!val("withAlt")) continue; if(val(a)) ok=(await fetchWx(a,true))&&ok; } if(!ok) open(); };
 }
 function wxLink(a){ const icao=(val(a)||"").toUpperCase(); const l=$(a+"Link"); if(l) l.href="https://aviationweather.gov/data/metar/?ids="+icao+"&taf=1&hours=1"; }
 
@@ -462,4 +486,4 @@ function initAirports(){
   $("apSave").onclick=()=>{ const {out,bad}=apParse($("apText").value); try{ localStorage.setItem(AP_KEY,JSON.stringify(out)); }catch(e){} $("apMsg").textContent=Object.keys(out).length+" Plätze gespeichert"+(bad.length?" · nicht gelesen: "+bad.join(" | "):"."); ["dep","dest","altn"].forEach(a=>$(a).dispatchEvent(new Event("input"))); };
   $("apClear").onclick=()=>{ try{ localStorage.removeItem(AP_KEY); }catch(e){} $("apText").value=""; $("apMsg").textContent="Eigene Daten gelöscht."; ["dep","dest","altn"].forEach(a=>$(a).dispatchEvent(new Event("input"))); };
 }
-initFlights(); initAirports();
+initFlights(); initAirports(); initWxImport();

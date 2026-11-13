@@ -59,6 +59,7 @@
 
 <section>
   <h2>Wetter &amp; Flugplätze</h2>
+  <div class="row" style="margin:6px 0"><button type="button" class="btn s" id="wxAll">Wetter für alle Plätze laden</button><button type="button" class="btn s o" id="wxPasteBtn">Wetter einfügen</button></div>
   <div class="note">„Laden“ holt METAR und TAF von aviationweather.gov. Ist der Abruf in dieser Ansicht gesperrt, den Link öffnen, die Meldungen kopieren und hier einfügen. Gelb markiert: TAF-Gruppen im Zeitraum ETA ± 1 h.</div>
   <div class="g" style="margin-top:8px">
     <label>Mag. Variation (° E +)<input id="varE" data-k inputmode="decimal" value="4.5"></label>
@@ -217,7 +218,7 @@
   <h2>PDF-Vorschau</h2>
   <div class="note" id="pdfHint"></div>
   <div id="pdfPages"></div>
-  <div class="row" style="margin-top:10px;position:sticky;bottom:0;background:#fff;padding:8px 0"><button class="btn r" id="pdfSave">Als PDF speichern / teilen</button><button class="btn o" id="pdfClose">Schließen</button></div>
+  <div class="row" style="margin-top:10px;position:sticky;bottom:0;background:#fff;padding:8px 0"><button class="btn r" id="pdfOpen">Öffnen / Drucken</button><button class="btn" id="pdfSave">Speichern / Teilen</button><button class="btn o" id="pdfClose">Schließen</button></div>
 </dialog>
 <dialog id="apDlg">
   <h2>Flugplatzdaten</h2>
@@ -227,6 +228,14 @@
   <div class="row" style="margin-top:8px"><button class="btn" id="apSave">Speichern</button><button class="btn o" id="apClear">Eigene Daten löschen</button><button class="btn o" id="apClose">Schließen</button></div>
 </dialog>
 
+<dialog id="wxDlg">
+  <h2>METAR / TAF einfügen</h2>
+  <div class="note">Im Browser sperrt aviationweather.gov den direkten Abruf. So geht es: 1. Link öffnen · 2. ganzen Text markieren und kopieren · 3. hier einfügen und „Übernehmen“. Die Meldungen werden automatisch den Plätzen zugeordnet.</div>
+  <div class="row" style="margin:8px 0"><a class="btn s" id="wxOpenLink" target="_blank" rel="noopener" href="#">1. aviationweather.gov öffnen</a></div>
+  <textarea id="wxPaste" rows="10" placeholder="METAR LOWW … / TAF LOWW …"></textarea>
+  <div class="note" id="wxPasteMsg"></div>
+  <div class="row" style="margin-top:8px"><button class="btn" id="wxApply">Übernehmen</button><button class="btn o" id="wxClose">Schließen</button></div>
+</dialog>
 <dialog id="acDlg">
   <h2>Flugzeuge · Basisleermassen</h2>
   <div class="note">Werte aus dem Weight and Balance Report. Masse in kg, Moment in mkg. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.</div>
